@@ -1,0 +1,6 @@
+sqlalchemy
+pymysql
+pandas
+lightgbm
+flask
+pyyaml 

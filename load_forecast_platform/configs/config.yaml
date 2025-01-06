@@ -1,0 +1,58 @@
+database:
+  url: mysql+pymysql://root:lqJeaFfVmD@121.40.64.25:30306/vpp
+  host: 121.40.64.25
+  port: 30306
+  user: root
+  password: lqJeaFfVmD
+  database: vpp
+
+model_params:
+  lightgbm:
+    boosting_type: gbdt
+    objective: rmse
+    n_jobs: 4
+    max_depth: 8
+    subsample: 0.5
+    subsample_freq: 1
+    learning_rate: 0.05
+    min_child_samples: 20
+    n_estimators: 1000
+    boost_from_average: false
+    random_state: 0
+    verbosity: -1
+    
+  lstm:
+    units: 64
+    dropout: 0.2
+    recurrent_dropout: 0.2
+    
+  xgboost:
+    max_depth: 6
+    learning_rate: 0.1
+    n_estimators: 100
+
+training_params:
+  batch_size: 32
+  epochs: 100
+  validation_split: 0.2
+  early_stopping_patience: 10
+  
+  # LightGBM特定的训练参数
+  lightgbm_training:
+    early_stopping_rounds: 50
+    verbose: False
+    eval_metric: ['rmse', 'mae']
+
+feature_engineering:
+  time_features:
+    - hour
+    - day_of_week
+    - month
+    - is_holiday
+  weather_features:
+    - temperature
+    - humidity
+    - wind_speed
+  load_features:
+    - load_lag_24
+    - load_lag_168 

@@ -1,0 +1,18 @@
+database:
+  url: mysql+pymysql://test:test@localhost:3306/test_db
+  host: localhost
+  port: 3306
+  user: test
+  password: test
+  database: test_db
+
+model_params:
+  lightgbm:
+    boosting_type: gbdt
+    objective: rmse
+    n_jobs: 4
+    max_depth: 8
+
+training_params:
+  batch_size: 32
+  epochs: 100 
