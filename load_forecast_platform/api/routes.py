@@ -1,154 +1,155 @@
-# -*- coding: utf-8 -*-
-from flask import Flask, request, jsonify
-from datetime import datetime, timedelta
+from flask import request, jsonify
+from load_forecast_platform.api import app
+from load_forecast_platform.utils.db_utils import DatabaseConnection
 from load_forecast_platform.utils.config import Config
-from load_forecast_platform.data_processor.data_loader import DataLoader
-from load_forecast_platform.predictor.predictor import LoadPredictor
-from load_forecast_platform.models.model_factory import ModelFactory
+from load_forecast_platform.data_processor.data_processor import DataProcessor
+import pandas as pd
+from datetime import datetime
+from sqlalchemy import text
 
-app = Flask(__name__)
-config = Config()
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    """健康检查接口"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    })
-
-@app.route('/load/historical', methods=['GET'])
-def get_historical_load():
-    """获取历史负荷数据"""
+@app.route('/ustlf/station/register', methods=['POST'])
+def register_station():
+    """电站注册接口"""
     try:
-        start_time = datetime.strptime(request.args.get('start_time'), '%Y-%m-%d %H:%M:%S')
-        end_time = datetime.strptime(request.args.get('end_time'), '%Y-%m-%d %H:%M:%S')
-        area_code = request.args.get('area_code')
-        
-        loader = DataLoader(config.database)
-        data = loader.load_load_data(start_time, end_time, area_code)
-        
+        # 1. 参数校验
+        data = request.json
+        validation_result = validate_station_params(data)
+        if not validation_result['success']:
+            return jsonify({
+                'code': 401,
+                'msg': f"参数校验失败: {validation_result['msg']}"
+            })
+
+        # 2. 获取参数
+        site_info = {
+            'Site_Id': data['Site_Id'],
+            'Site_Name': data['Site_Name'],
+            'Longitude': data['Longitude'],
+            'Latitude': data['Latitude'],
+            'Stype': data['Stype'],
+            'Rated_Capacity': data.get('Rated_Capacity'),
+            'Rated_Power': data.get('Rated_Power'),
+            'Rated_Power_PV': data.get('Rated_Power_PV'),
+            'Frequency_Load': data.get('Frequency_Load'),
+            'Frequency_Meteo': data.get('Frequency_Meteo'),
+            'First_Load_Time': data.get('First_Load_Time'),
+            'Upload_Time': datetime.now()
+        }
+
+        # 3. 处理历史负荷数据
+        his_load_file = request.files.get('His_load')
+        if his_load_file:
+            load_data = pd.read_csv(his_load_file)
+            # 数据处理
+            processor = DataProcessor()
+            processed_load = processor.process_load_data(load_data)
+
+        # 4. 处理历史气象数据
+        his_meteo_file = request.files.get('His_meteo')
+        if his_meteo_file:
+            meteo_data = pd.read_csv(his_meteo_file)
+            # 数据处理
+            processed_meteo = processor.process_meteo_data(meteo_data)
+
+        # 5. 存储数据
+        db = DatabaseConnection(Config().database)
+        with db.engine.begin() as conn:
+            # 存储电站信息
+            insert_station_sql = """
+                INSERT INTO ustlf_station_info (
+                    Site_Id, Site_Name, Longitude, Latitude, Stype,
+                    Rated_Capacity, Rated_Power, Rated_Power_PV,
+                    Frequency_Load, Frequency_Meteo, First_Load_Time, Upload_Time
+                ) VALUES (
+                    :Site_Id, :Site_Name, :Longitude, :Latitude, :Stype,
+                    :Rated_Capacity, :Rated_Power, :Rated_Power_PV,
+                    :Frequency_Load, :Frequency_Meteo, :First_Load_Time, :Upload_Time
+                )
+            """
+            conn.execute(text(insert_station_sql), site_info)
+
+            # 存储历史负荷数据
+            if his_load_file:
+                for _, row in processed_load.iterrows():
+                    insert_load_sql = """
+                        INSERT INTO ustlf_station_history_load (
+                            Site_Id, Site_Name, Load_TimeStamp, Load_Data, Upload_Time
+                        ) VALUES (
+                            :Site_Id, :Site_Name, :Load_TimeStamp, :Load_Data, :Upload_Time
+                        )
+                    """
+                    load_data = {
+                        'Site_Id': site_info['Site_Id'],
+                        'Site_Name': site_info['Site_Name'],
+                        'Load_TimeStamp': row['timestamp'],
+                        'Load_Data': row['load'],
+                        'Upload_Time': datetime.now()
+                    }
+                    conn.execute(text(insert_load_sql), load_data)
+
+            # 存储气象数据
+            if his_meteo_file:
+                for _, row in processed_meteo.iterrows():
+                    insert_meteo_sql = """
+                        INSERT INTO ustlf_station_meteo_data (
+                            Site_Id, Meteo_Id, Meteo_times, Update_Time,
+                            relative_humidity_2m, surface_pressure, precipitation,
+                            wind_speed_10m, temperation_2m, shortwave_radiation
+                        ) VALUES (
+                            :Site_Id, :Meteo_Id, :Meteo_times, :Update_Time,
+                            :relative_humidity_2m, :surface_pressure, :precipitation,
+                            :wind_speed_10m, :temperation_2m, :shortwave_radiation
+                        )
+                    """
+                    meteo_data = {
+                        'Site_Id': site_info['Site_Id'],
+                        'Meteo_Id': 1,  # 这里需要根据实际情况设置
+                        'Meteo_times': row['timestamp'],
+                        'Update_Time': datetime.now(),
+                        'relative_humidity_2m': row.get('relative_humidity_2m'),
+                        'surface_pressure': row.get('surface_pressure'),
+                        'precipitation': row.get('precipitation'),
+                        'wind_speed_10m': row.get('wind_speed_10m'),
+                        'temperation_2m': row.get('temperation_2m'),
+                        'shortwave_radiation': row.get('shortwave_radiation')
+                    }
+                    conn.execute(text(insert_meteo_sql), meteo_data)
+
         return jsonify({
-            "status": "success",
-            "data": data.to_dict('records')
+            'code': 200,
+            'msg': '电站注册成功'
         })
+
     except Exception as e:
         return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
-
-@app.route('/weather/historical', methods=['GET'])
-def get_historical_weather():
-    """获取历史气象数据"""
-    try:
-        start_time = datetime.strptime(request.args.get('start_time'), '%Y-%m-%d %H:%M:%S')
-        end_time = datetime.strptime(request.args.get('end_time'), '%Y-%m-%d %H:%M:%S')
-        area_code = request.args.get('area_code')
-        
-        loader = DataLoader(config.database)
-        data = loader.load_weather_data(start_time, end_time, area_code)
-        
-        return jsonify({
-            "status": "success",
-            "data": data.to_dict('records')
+            'code': 500,
+            'msg': f'服务器错误: {str(e)}'
         })
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
 
-@app.route('/model/train', methods=['POST'])
-def train_model():
-    """训练模型"""
-    try:
-        data = request.get_json()
-        start_time = datetime.strptime(data['start_time'], '%Y-%m-%d %H:%M:%S')
-        end_time = datetime.strptime(data['end_time'], '%Y-%m-%d %H:%M:%S')
-        model_type = data['model_type']
-        area_code = data.get('area_code')
-        
-        # 加载数据
-        loader = DataLoader(config.database)
-        train_data = loader.load_load_data(start_time, end_time, area_code)
-        
-        # 创建并训练模型
-        model = ModelFactory.create_model(model_type, config.model_params)
-        trainer = ModelTrainer(model, config.training_params)
-        history = trainer.train(train_data)
-        
-        return jsonify({
-            "status": "success",
-            "training_history": history
-        })
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
 
-@app.route('/predict/load', methods=['POST'])
-def predict_load():
-    """负荷预测"""
-    try:
-        data = request.get_json()
-        prediction_time = datetime.strptime(data['prediction_time'], '%Y-%m-%d %H:%M:%S')
-        model_version = data['model_version']
-        horizon = int(data['horizon'])
-        area_code = data.get('area_code')
-        
-        # 加载模型
-        model = ModelFactory.load_model(model_version)
-        
-        # 准备数据
-        loader = DataLoader(config.database)
-        features = loader.load_features_for_prediction(
-            prediction_time,
-            horizon,
-            area_code
-        )
-        
-        # 预测
-        predictor = LoadPredictor(model)
-        predictions = predictor.predict(features)
-        
-        return jsonify({
-            "status": "success",
-            "predictions": predictions.to_dict('records')
-        })
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+def validate_station_params(data):
+    """验证电站注册参数"""
+    required_fields = {
+        'Site_Id': int,
+        'Site_Name': str,
+        'Longitude': float,
+        'Latitude': float,
+        'Stype': int
+    }
 
-@app.route('/model/evaluate', methods=['GET'])
-def evaluate_model():
-    """评估模型性能"""
-    try:
-        model_version = request.args.get('model_version')
-        start_time = datetime.strptime(request.args.get('start_time'), '%Y-%m-%d %H:%M:%S')
-        end_time = datetime.strptime(request.args.get('end_time'), '%Y-%m-%d %H:%M:%S')
-        area_code = request.args.get('area_code')
-        
-        # 加载模型和数据
-        model = ModelFactory.load_model(model_version)
-        loader = DataLoader(config.database)
-        
-        # 获取实际值和预测值
-        actual_data = loader.load_load_data(start_time, end_time, area_code)
-        predictions = model.predict(actual_data)
-        
-        # 计算评估指标
-        evaluation = calculate_metrics(actual_data, predictions)
-        
-        return jsonify({
-            "status": "success",
-            "evaluation": evaluation
-        })
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500 
+    # 检查必填字段
+    for field, field_type in required_fields.items():
+        if field not in data:
+            return {'success': False, 'msg': f'缺少必填字段 {field}'}
+        if not isinstance(data[field], field_type):
+            return {'success': False, 'msg': f'字段 {field} 类型错误'}
+
+    # 检查数值范围
+    if not (0 <= data['Longitude'] <= 180):
+        return {'success': False, 'msg': '经度范围应在0-180之间'}
+    if not (0 <= data['Latitude'] <= 90):
+        return {'success': False, 'msg': '纬度范围应在0-90之间'}
+    if data['Stype'] not in [1, 2, 3]:
+        return {'success': False, 'msg': '电站类型应为1、2或3'}
+
+    return {'success': True, 'msg': '验证通过'}

@@ -22,4 +22,7 @@ class Config:
         
     @property
     def training_params(self):
-        return self.config['training_params'] 
+        return self.config['training_params']
+if __name__ == '__main__':
+    config = Config('../configs/config.yaml')
+    print(config.database)

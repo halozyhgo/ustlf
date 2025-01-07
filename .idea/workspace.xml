@@ -4,20 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="初次配置后的项目v1">
-      <change afterPath="$PROJECT_DIR$/load_forecast_platform/docs/表设计方案.pdf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/说明文档/表设计方案.docx" afterDir="false" />
+    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="创建好了各个表结构数据">
+      <change afterPath="$PROJECT_DIR$/load_forecast_platform/docs/超短期负荷预测详细设计方案.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/USLF_pro.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/USLF_pro.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/data_processor/data_loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/data_processor/data_loader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/models/model_factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/models/model_factory.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/load_forecast_platform/predictor/predictor.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/predictor/predictor.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/tests/test_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/tests/test_config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/tests/test_config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/tests/test_config.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/说明文档/超短期负荷预测详细设计方案-初稿.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_forecast_platform/scripts/run_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/scripts/run_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_forecast_platform/trainer/model_trainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/trainer/model_trainer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_forecast_platform/utils/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/utils/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/说明文档/表设计方案.docx" beforeDir="false" afterPath="$PROJECT_DIR$/说明文档/表设计方案.docx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,6 +55,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Python.app.executor": "Run",
+    "Python.config.executor": "Run",
     "Python.init_db.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
@@ -77,6 +76,7 @@
       <recent name="D:\CodeData\USLF_pro\说明文档" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\CodeData\USLF_pro\load_forecast_platform\docs" />
       <recent name="D:\CodeData\USLF_pro\说明文档" />
     </key>
   </component>
@@ -96,6 +96,29 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="config" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="USLF_pro" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/load_forecast_platform/utils" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/load_forecast_platform/utils/config.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -146,6 +169,7 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.init_db" />
+        <item itemvalue="Python.config" />
         <item itemvalue="Python.app" />
       </list>
     </recent_temporary>
@@ -167,7 +191,7 @@
       <option name="presentableId" value="Default" />
       <updated>1736153165527</updated>
       <workItem from="1736153166657" duration="6525000" />
-      <workItem from="1736209242483" duration="5474000" />
+      <workItem from="1736209242483" duration="15779000" />
     </task>
     <task id="LOCAL-00001" summary="初次配置后的项目v1">
       <option name="closed" value="true" />
@@ -177,7 +201,15 @@
       <option name="project" value="LOCAL" />
       <updated>1736163608316</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="创建好了各个表结构数据">
+      <option name="closed" value="true" />
+      <created>1736238816475</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1736238816475</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -196,10 +228,23 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="初次配置后的项目v1" />
-    <option name="LAST_COMMIT_MESSAGE" value="初次配置后的项目v1" />
+    <MESSAGE value="创建好了各个表结构数据" />
+    <option name="LAST_COMMIT_MESSAGE" value="创建好了各个表结构数据" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/load_forecast_platform/utils/config.py</url>
+          <line>16</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/USLF_pro$init_db.coverage" NAME="init_db Coverage Results" MODIFIED="1736235598295" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/scripts" />
+    <SUITE FILE_PATH="coverage/USLF_pro$init_db.coverage" NAME="init_db Coverage Results" MODIFIED="1736248609130" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/scripts" />
     <SUITE FILE_PATH="coverage/USLF_pro$app.coverage" NAME="app Coverage Results" MODIFIED="1736153446990" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/USLF_pro$config.coverage" NAME="config Coverage Results" MODIFIED="1736243774453" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/utils" />
   </component>
 </project>

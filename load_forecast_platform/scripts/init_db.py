@@ -17,98 +17,98 @@ def create_tables(db):
 
     # 创建电站信息表
     station_info_table = """
-    CREATE TABLE IF NOT EXISTS ustlf_station_info (
-        Site_Id INT PRIMARY KEY,             -- 电站id（主键，不可为空）
-        Site_Name VARCHAR(255) NOT NULL,     -- 电站名称（不可为空）
-        Longitude DECIMAL(10, 6) NOT NULL,   -- 经度（不可为空）
-        Latitude DECIMAL(10, 6) NOT NULL,    -- 纬度（不可为空）
-        Stype TINYINT NOT NULL,              -- 电站类型：1: 光储电站, 2: 储能电站, 3: 其他电站（不可为空）
-        Rated_Capacity DECIMAL(10, 2),       -- 额定容量（可为空）
-        Rated_Power DECIMAL(10, 2),          -- 额定功率（可为空）
-        Rated_Power_PV DECIMAL(10, 2),       -- 额定光伏发电功率（可为空）
-        Frequency_Load INT,                  -- 负荷数据时间分辨率（可为空）
-        Frequency_Meteo INT,                 -- 气象数据时间分辨率（可为空）
-        First_Load_Time DATETIME NOT NULL,   -- 负荷开始时间（不可为空）
-        Upload_Time DATETIME NOT NULL        -- 电站注册时间（不可为空）
+    create table if not exists ustlf_station_info (
+        site_id int primary key,             -- 电站id（主键，不可为空）
+        site_name varchar(255) not null,     -- 电站名称（不可为空）
+        longitude decimal(10, 6) not null,   -- 经度（不可为空）
+        latitude decimal(10, 6) not null,    -- 纬度（不可为空）
+        stype tinyint not null,              -- 电站类型：1: 光储电站, 2: 储能电站, 3: 其他电站（不可为空）
+        rated_capacity decimal(10, 2),       -- 额定容量（可为空）
+        rated_power decimal(10, 2),          -- 额定功率（可为空）
+        rated_power_pv decimal(10, 2),       -- 额定光伏发电功率（可为空）
+        frequency_load int,                  -- 负荷数据时间分辨率（可为空）
+        frequency_meteo int,                 -- 气象数据时间分辨率（可为空）
+        first_load_time datetime not null,   -- 负荷开始时间（不可为空）
+        upload_time datetime not null        -- 电站注册时间（不可为空）
     );
     """
 
     # 创建历史负荷表
     station_history_load_table = """
-    CREATE TABLE IF NOT EXISTS ustlf_station_history_load (
-        Site_Id INT NOT NULL,              -- 电站id（不可为空，外键）
-        Site_Name VARCHAR(255) NOT NULL,   -- 电站名称（不可为空）
-        Load_TimeStamp DATETIME NOT NULL,  -- 负荷时间（不可为空）
-        Load_Data DECIMAL(10, 2) NOT NULL, -- 负荷数值（不可为空）
-        Upload_Time DATETIME NOT NULL,     -- 上传时间（不可为空）
-        PRIMARY KEY (Site_Id, Load_TimeStamp) -- 联合主键：电站id + 负荷时间
+    create table if not exists ustlf_station_history_load (
+        site_id int not null,              -- 电站id（不可为空，外键）
+        site_name varchar(255) not null,   -- 电站名称（不可为空）
+        load_timestamp datetime not null,  -- 负荷时间（不可为空）
+        load_data decimal(10, 2) not null, -- 负荷数值（不可为空）
+        upload_time datetime not null,     -- 上传时间（不可为空）
+        primary key (site_id, load_timestamp) -- 联合主键：电站id + 负荷时间
     );
     """
 
     # 创建气象信息表
     meteo_info_table = """
-    CREATE TABLE IF NOT EXISTS ustlf_meteo_info (
-        Meteo_Id INT PRIMARY KEY,         -- 气象id（主键）
-        Meteo_Name VARCHAR(255) NOT NULL, -- 气象名称（不可为空）
-        Upload_Time DATETIME NOT NULL     -- 气象源注册时间（不可为空）
+    create table if not exists ustlf_meteo_info (
+        meteo_id int primary key,         -- 气象id（主键）
+        meteo_name varchar(255) not null, -- 气象名称（不可为空）
+        upload_time datetime not null     -- 气象源注册时间（不可为空）
     );
     """
 
     # 创建电站气象关联表
     station_meteo_mapping_table = """
-    CREATE TABLE IF NOT EXISTS ustlf_station_meteo_mapping (
-        Site_Id INT NOT NULL,            -- 电站id（不可为空，联合主键）
-        Meteo_Id INT NOT NULL,           -- 气象id（不可为空，联合主键）
-        Update_Time DATETIME NOT NULL,   -- 更新时间（不可为空）
-        PRIMARY KEY (Site_Id, Meteo_Id)  -- 联合主键：电站id和气象id
+    create table if not exists ustlf_station_meteo_mapping (
+        site_id int not null,            -- 电站id（不可为空，联合主键）
+        meteo_id int not null,           -- 气象id（不可为空，联合主键）
+        update_time datetime not null,   -- 更新时间（不可为空）
+        primary key (site_id, meteo_id)  -- 联合主键：电站id和气象id
     );
     """
 
     # 创建电站气象数据表
     station_meteo_data_table = """
-    CREATE TABLE IF NOT EXISTS ustlf_station_meteo_data (
-        Site_Id INT NOT NULL,                               -- 电站id（不可为空，联合主键）
-        Meteo_Id INT NOT NULL,                              -- 气象id（不可为空，联合主键）
-        Meteo_times DATETIME NOT NULL,                      -- 时间戳（不可为空，联合主键）
-        Update_Time DATETIME NOT NULL,                      -- 更新时间（不可为空）
-        relative_humidity_2m DECIMAL(5, 2) NOT NULL,        -- 2m相对湿度（不可为空，支持两位小数）
-        surface_pressure DECIMAL(10, 2) NOT NULL,           -- 气压（不可为空，支持两位小数）
-        precipitation DECIMAL(10, 2) NOT NULL,              -- 降水量（不可为空，支持两位小数）
-        wind_speed_10m DECIMAL(5, 2) NOT NULL,              -- 10m高度风速（不可为空，支持两位小数）
-        temperation_2m DECIMAL(5, 2) NOT NULL,              -- 2m高度温度（不可为空，支持两位小数）
-        shortwave_radiation DECIMAL(10, 2),                 -- 向下短波辐照（不可为空，支持两位小数）
-        PRIMARY KEY (Site_Id, Meteo_Id, Meteo_times)        -- 联合主键：电站id + 气象id + 时间戳
+    create table if not exists ustlf_station_meteo_data (
+        site_id int not null,                               -- 电站id（不可为空，联合主键）
+        meteo_id int not null,                              -- 气象id（不可为空，联合主键）
+        meteo_times datetime not null,                      -- 时间戳（不可为空，联合主键）
+        update_time datetime not null,                      -- 更新时间（不可为空）
+        relative_humidity_2m decimal(5, 2) not null,        -- 2m相对湿度（不可为空，支持两位小数）
+        surface_pressure decimal(10, 2) not null,           -- 气压（不可为空，支持两位小数）
+        precipitation decimal(10, 2) not null,              -- 降水量（不可为空，支持两位小数）
+        wind_speed_10m decimal(5, 2) not null,              -- 10m高度风速（不可为空，支持两位小数）
+        temperation_2m decimal(5, 2) not null,              -- 2m高度温度（不可为空，支持两位小数）
+        shortwave_radiation decimal(10, 2),                 -- 向下短波辐照（不可为空，支持两位小数）
+        primary key (site_id, meteo_id, meteo_times)        -- 联合主键：电站id + 气象id + 时间戳
     );
     """
 
     # 创建预测结果表
     pred_res_table = """
-    CREATE TABLE IF NOT EXISTS ustlf_pred_res (
-        Site_Id INT NOT NULL,              -- 电站id
-        Meteo_Id INT NOT NULL,             -- 气象id
-        Cal_Time DATETIME NOT NULL,        -- 计算时间
-        Forcast_Time_Start DATETIME NOT NULL, -- 预测结果的起始时间
-        Res_Data DECIMAL(10, 2) NOT NULL,           -- 超短期负荷预测结果
-        PRIMARY KEY (Site_Id, Meteo_Id, Cal_Time, Forcast_Time_Start) -- 联合主键
+    create table if not exists ustlf_pred_res (
+        site_id int not null,              -- 电站id
+        meteo_id int not null,             -- 气象id
+        cal_time datetime not null,        -- 计算时间
+        forcast_time_start datetime not null, -- 预测结果的起始时间
+        res_data decimal(10, 2) not null,           -- 超短期负荷预测结果
+        primary key (site_id, meteo_id, cal_time, forcast_time_start) -- 联合主键
     );
     """
 
     # 创建日志信息表
     log_info_table = """
-    CREATE TABLE IF NOT EXISTS ustlf_log_info (
-        Log_id INT AUTO_INCREMENT PRIMARY KEY,  -- 记录id，主键，自增长
-        Site_Id INT NOT NULL,                   -- 电站id
-        Info TEXT NOT NULL,                     -- 日志信息
-        Date DATETIME NOT NULL                  -- 日志录入时间
+    create table if not exists ustlf_log_info (
+        log_id int auto_increment primary key,  -- 记录id，主键，自增长
+        site_id int not null,                   -- 电站id
+        info text not null,                     -- 日志信息
+        date datetime not null                  -- 日志录入时间
     );
     """
 
     # 创建特征超参数信息表
     model_feature_hp_info_table = """
-    CREATE TABLE IF NOT EXISTS ustlf_model_feature_hp_info (
-        Site_Id INT PRIMARY KEY,              -- 电站id，主键
-        Feature_info TEXT NOT NULL,            -- 输入特征信息
-        Hyperparams_info TEXT NOT NULL         -- 输入超参数信息
+    create table if not exists ustlf_model_feature_hp_info (
+        site_id int primary key,              -- 电站id，主键
+        feature_info text not null,            -- 输入特征信息
+        hyperparams_info text not null         -- 输入超参数信息
     );
     """
 

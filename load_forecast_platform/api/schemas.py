@@ -1,45 +1,17 @@
 # -*- coding: utf-8 -*-
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
 from datetime import datetime
-from typing import Optional, List, Dict
 
-class LoadData(BaseModel):
-    timestamp: datetime
-    load_value: float
-    area_code: Optional[str]
-
-class WeatherData(BaseModel):
-    timestamp: datetime
-    temperature: Optional[float]
-    humidity: Optional[float]
-    wind_speed: Optional[float]
-    wind_direction: Optional[float]
-    rainfall: Optional[float]
-    area_code: Optional[str]
-
-class TrainingParams(BaseModel):
-    model_type: str
-    start_time: datetime
-    end_time: datetime
-    area_code: Optional[str]
-    custom_params: Optional[Dict]
-
-class PredictionParams(BaseModel):
-    model_version: str
-    prediction_time: datetime
-    horizon: int  # 预测时长(小时)
-    area_code: Optional[str]
-
-class PredictionResult(BaseModel):
-    timestamp: datetime
-    predicted_load: float
-    confidence_lower: Optional[float]
-    confidence_upper: Optional[float]
-
-class ModelEvaluation(BaseModel):
-    model_version: str
-    mape: float
-    rmse: float
-    mae: float
-    r2: float
-    evaluation_time: datetime 
+class StationRegisterRequest(BaseModel):
+    Site_Id: int = Field(..., description="电站id")
+    Site_Name: str = Field(..., description="电站名称")
+    Longitude: float = Field(..., ge=0, le=180, description="经度")
+    Latitude: float = Field(..., ge=0, le=90, description="纬度")
+    Stype: int = Field(..., ge=1, le=3, description="电站类型")
+    Rated_Capacity: Optional[float] = Field(None, description="额定容量")
+    Rated_Power: Optional[float] = Field(None, description="额定功率")
+    Rated_Power_PV: Optional[float] = Field(None, description="额定光伏发电功率")
+    Frequency_Load: Optional[int] = Field(None, description="负荷数据时间分辨率")
+    Frequency_Meteo: Optional[int] = Field(None, description="气象数据分辨率")
+    First_Load_Time: Optional[datetime] = Field(None, description="负荷开始时间") 
