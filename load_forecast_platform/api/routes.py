@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
 from datetime import datetime, timedelta
-from utils.config import Config
-from data_processor.data_loader import DataLoader
-from predictor.predictor import LoadPredictor
-from models.model_factory import ModelFactory
+from load_forecast_platform.utils.config import Config
+from load_forecast_platform.data_processor.data_loader import DataLoader
+from load_forecast_platform.predictor.predictor import LoadPredictor
+from load_forecast_platform.models.model_factory import ModelFactory
 
 app = Flask(__name__)
 config = Config()

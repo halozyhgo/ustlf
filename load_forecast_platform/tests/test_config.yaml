@@ -15,4 +15,4 @@ model_params:
 
 training_params:
   batch_size: 32
-  epochs: 100 
+  epochs: 100

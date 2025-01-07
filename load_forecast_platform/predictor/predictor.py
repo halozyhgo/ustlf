@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from utils.logger import setup_logger
+from load_forecast_platform.utils.logger import setup_logger
 import pandas as pd
 
 logger = setup_logger(__name__)

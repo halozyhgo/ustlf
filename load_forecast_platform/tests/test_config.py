@@ -2,7 +2,7 @@
 import os
 import pytest
 import yaml
-from utils.config import Config
+from load_forecast_platform.utils.config import Config
 
 @pytest.fixture
 def sample_config_path(tmp_path):

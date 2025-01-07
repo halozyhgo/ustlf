@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from .base_model import BaseModel
-from .lightgbm_model import LightGBMModel
+from load_forecast_platform.models.base_model import BaseModel
+from load_forecast_platform.models.lightgbm_model import LightGBMModel
 
 class ModelFactory:
     @staticmethod
