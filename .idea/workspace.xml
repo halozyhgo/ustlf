@@ -4,14 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="将表中每个字段设置为小写，保持规范命名">
-      <change afterPath="$PROJECT_DIR$/load_forecast_platform/utils/database.py" afterDir="false" />
+    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="确定好表结构">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/utils/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/utils/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/utils/db_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/utils/db_utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -189,7 +184,7 @@
       <updated>1736153165527</updated>
       <workItem from="1736153166657" duration="6525000" />
       <workItem from="1736209242483" duration="15793000" />
-      <workItem from="1736297136248" duration="7948000" />
+      <workItem from="1736297136248" duration="11397000" />
     </task>
     <task id="LOCAL-00001" summary="初次配置后的项目v1">
       <option name="closed" value="true" />
@@ -215,7 +210,15 @@
       <option name="project" value="LOCAL" />
       <updated>1736251232993</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="确定好表结构">
+      <option name="closed" value="true" />
+      <created>1736306012418</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1736306012418</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -236,51 +239,52 @@
     <MESSAGE value="初次配置后的项目v1" />
     <MESSAGE value="创建好了各个表结构数据" />
     <MESSAGE value="将表中每个字段设置为小写，保持规范命名" />
-    <option name="LAST_COMMIT_MESSAGE" value="将表中每个字段设置为小写，保持规范命名" />
+    <MESSAGE value="确定好表结构" />
+    <option name="LAST_COMMIT_MESSAGE" value="确定好表结构" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py</url>
-          <line>153</line>
+          <line>155</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py</url>
-          <line>154</line>
+          <line>156</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py</url>
-          <line>156</line>
+          <line>158</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py</url>
-          <line>135</line>
+          <line>137</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py</url>
-          <line>136</line>
+          <line>138</line>
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py</url>
-          <line>137</line>
+          <line>139</line>
           <option name="timeStamp" value="10" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py</url>
-          <line>138</line>
+          <line>140</line>
           <option name="timeStamp" value="11" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/USLF_pro$init_db.coverage" NAME="init_db Coverage Results" MODIFIED="1736305915329" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/scripts" />
+    <SUITE FILE_PATH="coverage/USLF_pro$init_db.coverage" NAME="init_db Coverage Results" MODIFIED="1736313405287" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/scripts" />
     <SUITE FILE_PATH="coverage/USLF_pro$app.coverage" NAME="app Coverage Results" MODIFIED="1736153446990" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/USLF_pro$config.coverage" NAME="config Coverage Results" MODIFIED="1736243774453" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/utils" />
   </component>

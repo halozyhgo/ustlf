@@ -37,10 +37,11 @@ def create_tables(db):
             create table if not exists ustlf_station_history_load (
             idx bigint auto_increment primary key,  -- 自增主键（BIGINT）
             site_id varchar(50) not null,                -- 电站id（不可为空）
-            site_name varchar(255) not null,     -- 电站名称（不可为空）
-            load_times datetime not null unique, -- 负荷时间（不可为空，唯一）
+            load_time datetime not null unique, -- 负荷时间（不可为空，唯一）
             load_data decimal(10, 2) not null,   -- 负荷数值（不可为空）
-            upload_time datetime not null        -- 上传时间（不可为空）
+            upload_time datetime not null,       -- 上传时间（不可为空）
+            unique key (site_id, load_time) -- 联合唯一约束
+            
         );
         """
 
@@ -58,9 +59,10 @@ def create_tables(db):
     station_meteo_mapping_table = """
             create table if not exists ustlf_station_meteo_mapping (
             idx int auto_increment primary key,  -- 自增主键
-            site_id varchar(50) not null unique,         -- 电站id（不可为空，唯一）
-            meteo_id int not null unique,        -- 气象id（不可为空，唯一）
-            update_time datetime not null        -- 更新时间（不可为空）
+            site_id varchar(50) not null,         -- 电站id（不可为空，唯一）
+            meteo_id int not null,        -- 气象id（不可为空，唯一）
+            update_time datetime not null,        -- 更新时间（不可为空）
+            unique key (site_id, meteo_id) -- 联合唯一约束
         );
         """
 
@@ -68,16 +70,17 @@ def create_tables(db):
     station_meteo_data_table = """
         create table if not exists ustlf_station_meteo_data (
             idx bigint auto_increment primary key,  -- 自增主键（BIGINT）
-            site_id varchar(50) not null unique,         -- 电站id（不可为空，唯一）
-            meteo_id int not null unique,        -- 气象id（不可为空，唯一）
-            meteo_times datetime not null unique, -- 时间戳（不可为空，唯一）
-            update_time datetime not null,       -- 更新时间（不可为空）
+            site_id varchar(50) not null,           -- 电站id（不可为空，唯一）
+            meteo_id int not null,                  -- 气象id（不可为空，唯一）
+            meteo_times datetime not null,          -- 时间戳（不可为空，唯一）
+            update_time datetime not null,          -- 更新时间（不可为空）
             relative_humidity_2m decimal(5, 2) not null,        -- 2m相对湿度（不可为空，支持两位小数）
             surface_pressure decimal(10, 2) not null,           -- 气压（不可为空，支持两位小数）
             precipitation decimal(10, 2) not null,              -- 降水量（不可为空，支持两位小数）
             wind_speed_10m decimal(5, 2) not null,              -- 10m高度风速（不可为空，支持两位小数）
-            temperation_2m decimal(5, 2) not null,              -- 2m高度温度（不可为空，支持两位小数）
-            shortwave_radiation decimal(10, 2)                 -- 向下短波辐照（可为空，支持两位小数）
+            temperature_2m decimal(5, 2) not null,              -- 2m高度温度（不可为空，支持两位小数）
+            shortwave_radiation decimal(10, 2),                 -- 向下短波辐照（可为空，支持两位小数）
+            unique key (site_id, meteo_id,meteo_times) -- 联合唯一约束
         );
         """
 
@@ -89,8 +92,8 @@ def create_tables(db):
             meteo_id int not null,               -- 气象id（不可为空）
             cal_time datetime not null,          -- 计算时间（不可为空）
             forcast_time_start datetime not null, -- 预测结果的起始时间（不可为空）
-            res_data text not null,              -- 预测结果（JSON格式，不可为空）
-            unique key (site_id, meteo_id, cal_time, forcast_time_start) -- 联合唯一约束
+            res_data text not null,              -- 预测结果（文本格式，不可为空）
+            unique key (site_id, meteo_id, cal_time) -- 联合唯一约束
 );
 """
 
@@ -100,7 +103,7 @@ def create_tables(db):
         log_id int auto_increment primary key,  -- 记录id，主键，自增长
         site_id varchar(50) not null,                   -- 电站id
         info text not null,                     -- 日志信息
-        date datetime not null                  -- 日志录入时间
+        upload_time datetime not null                  -- 日志录入时间
     );
     """
 
