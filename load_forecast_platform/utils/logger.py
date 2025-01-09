@@ -2,16 +2,18 @@
 import logging
 import os
 from datetime import datetime
-from load_forecast_platform.utils.db_utils import DatabaseConnection
+from load_forecast_platform.utils.database import DataBase
 from load_forecast_platform.utils.config import Config
-from sqlalchemy import text
+from loguru import logger
+import pandas as pd
 
 class DBHandler(logging.Handler):
     """自定义数据库日志处理器"""
     def __init__(self, site_id=None):
         super().__init__()
         self.site_id = site_id
-        self.db = DatabaseConnection(Config().database)
+        config = Config().database
+        self.db = DataBase(**config)
         
     def emit(self, record):
         """将日志写入数据库"""
@@ -19,36 +21,20 @@ class DBHandler(logging.Handler):
             # 格式化日志消息
             log_entry = self.format(record)
             
-            # 准备SQL (log_id 是自增字段,会自动生成)
-            insert_sql = """
-                INSERT INTO ustlf_log_info 
-                    (site_id,    -- 电站ID
-                     info,       -- 日志信息
-                     date)       -- 日志时间
-                VALUES 
-                    (:site_id, :info, :date)
-            """
+            # 构建日志数据
+            log_data = pd.DataFrame([{
+                'site_id': self.site_id,
+                'info': log_entry,
+                'date': datetime.now()
+            }])
             
-            # 执行插入
-            with self.db.engine.begin() as conn:
-                result = conn.execute(text(insert_sql), {
-                    'site_id': self.site_id,
-                    'info': log_entry,
-                    'date': datetime.now()
-                })
-                # 如果需要获取自动生成的 log_id
-                # log_id = result.lastrowid
+            # 使用insert方法插入数据
+            self.db.insert('ustlf_log_info', log_data)
                 
         except Exception as e:
             # 如果写入数据库失败，打印到控制台
             print(f"Error writing to database: {str(e)}")
             print(f"Log message: {log_entry}")
-            
-    def close(self):
-        """关闭数据库连接"""
-        if hasattr(self, 'db'):
-            self.db.close()
-        super().close()
 
 def setup_logger(name, site_id=None, log_file=None, level=logging.INFO):
     """设置日志记录器

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
-from load_forecast_platform.utils.db_utils import DatabaseConnection
+from load_forecast_platform.utils.database import DatabaseConnection
 
 class DataLoader:
     def __init__(self, db_config):

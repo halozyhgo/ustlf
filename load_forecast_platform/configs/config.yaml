@@ -56,3 +56,8 @@ feature_engineering:
   load_features:
     - load_lag_24
     - load_lag_168 
+
+data_processing:
+  threshold_loss: 0.5      # 数据丢失阈值
+  threshold_abnormal: 0.5  # 异常值阈值
+  threshold_constant: 0.3  # 恒定斜率阈值 

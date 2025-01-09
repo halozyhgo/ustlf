@@ -1,0 +1,27 @@
+
+{
+    "site_id": "1770070031883964416",
+    "site_name": "彧寰科技三汇一",
+    "longitude": "120.22",
+    "latitude": "33.43",
+    "rated_capacity": "500",
+    "rated_power": "500",
+    "rated_power_pv": "400",
+    "frequency_load": "15",
+    "frequency_meteo": "15",
+    "first_load_time": "2024-03-22",
+    "upload_time": "2025-1-8",
+    "his_meteo": [123123]
+//[
+//  {
+//    "meteo_times": "2024-03-22 00:00:00",
+//    "relative_humidity_2m": null,
+//    "surface_pressure": null,
+//    "temperature_2m": null,
+//    "windspeed_10m": null,
+//    "precipitation": null,
+//    "shortwave_radiation": null
+//  }
+//
+//]
+}

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import request, jsonify
 from load_forecast_platform.api import app
-from load_forecast_platform.utils.db_utils import DatabaseConnection
+from load_forecast_platform.utils.database import DataBase
 from load_forecast_platform.utils.config import Config
 from load_forecast_platform.data_processor.data_processor import DataProcessor
 from load_forecast_platform.api.schemas import (
@@ -9,6 +9,8 @@ from load_forecast_platform.api.schemas import (
     FeatureSearchRequest, HyperParamSearchRequest, HistoryMeteoRequest,
     ModelTrainRequest, CommonResponse
 )
+import sys
+from loguru import logger
 import pandas as pd
 from datetime import datetime
 from sqlalchemy import text
@@ -29,102 +31,147 @@ def register_station():
         # 处理历史负荷数据
         load_df = pd.DataFrame(station_data.his_load)
         processed_load = processor.process_load_data(load_df)
+        processed_load['site_id']= station_data.site_id
+        processed_load['upload_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        processed_load['load_time'] = processed_load.index
+
 
         # 检查数据时长是否满足3个月
-        time_span = processed_load['timestamp'].max() - processed_load['timestamp'].min()
+        # time_span = processed_load['load_time'].max() - processed_load['load_time'].min()
+        time_span = processed_load.index.max() - processed_load.index.min()
         if time_span.days < 90:
             return jsonify(CommonResponse(
                 code="402",
                 msg="历史负荷时长不足3个月"
-            ).dict())
+            ).model_dump())
 
         # 处理历史气象数据
+        station_info_df = pd.DataFrame([{
+            'site_id': station_data.site_id,
+            'site_name': station_data.site_name,
+            'longitude':station_data.longitude,
+            'latitude':station_data.latitude,
+            'stype':station_data.stype,
+            'rated_capacity':station_data.rated_capacity,
+            'rated_power':station_data.rated_power,
+            'rated_power_pv':station_data.rated_power_pv,
+            'frequency_load':station_data.frequency_load,
+            'frequency_meteo':station_data.frequency_meteo,
+            'first_load_time':processed_load.index[0].to_pydatetime().strftime('%Y-%m-%d %H:%M:%S'),
+            'upload_time':datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        }])
         meteo_df = pd.DataFrame(station_data.his_meteo)
         processed_meteo = processor.process_meteo_data(meteo_df)
+        processed_meteo['site_id']= station_data.site_id
+        processed_meteo['update_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        processed_meteo['meteo_id'] = 1     # 默认气象id为1
+        meteo_df.set_index('meteo_times', inplace=True)
+        meteo_df['meteo_times'] = meteo_df.index
+        # meteo_df['winds']
 
         # 存储数据
-        db = DatabaseConnection(Config().database)
         try:
-            with db.engine.begin() as conn:
-                # 存储电站信息
-                insert_station_sql = """
-                    INSERT INTO ustlf_station_info (
-                        site_id, site_name, longitude, latitude, stype,
-                        rated_capacity, rated_power, rated_power_pv,
-                        frequency_load, frequency_meteo, first_load_time, upload_time
-                    ) VALUES (
-                        :site_id, :site_name, :longitude, :latitude, :stype,
-                        :rated_capacity, :rated_power, :rated_power_pv,
-                        :frequency_load, :frequency_meteo, :first_load_time, :upload_time
-                    )
-                """
-                station_info = station_data.dict()
-                station_info['upload_time'] = datetime.now()
-                conn.execute(text(insert_station_sql), station_info)
+            logger.info("开始初始化数据库...")
+            config = Config()
+            logger.info("配置加载成功")
+            logger.info(f"数据库配置: {config.database}")
 
-                # 存储历史负荷数据
-                for _, row in processed_load.iterrows():
-                    insert_load_sql = """
-                        INSERT INTO ustlf_station_history_load (
-                            site_id, site_name, load_timestamp, load_data, upload_time
-                        ) VALUES (
-                            :site_id, :site_name, :load_timestamp, :load_data, :upload_time
-                        )
-                    """
-                    load_data = {
-                        'site_id': station_data.site_id,
-                        'site_name': station_data.site_name,
-                        'load_timestamp': row['timestamp'],
-                        'load_data': row['load'],
-                        'upload_time': datetime.now()
-                    }
-                    conn.execute(text(insert_load_sql), load_data)
-
-                # 存储气象数据
-                for _, row in processed_meteo.iterrows():
-                    insert_meteo_sql = """
-                        INSERT INTO ustlf_station_meteo_data (
-                            site_id, meteo_id, meteo_times, update_time,
-                            relative_humidity_2m, surface_pressure, precipitation,
-                            wind_speed_10m, temperation_2m, shortwave_radiation
-                        ) VALUES (
-                            :site_id, :meteo_id, :meteo_times, :update_time,
-                            :relative_humidity_2m, :surface_pressure, :precipitation,
-                            :wind_speed_10m, :temperation_2m, :shortwave_radiation
-                        )
-                    """
-                    meteo_data = {
-                        'site_id': station_data.site_id,
-                        'meteo_id': 1,  # 默认气象源ID
-                        'meteo_times': row['timestamp'],
-                        'update_time': datetime.now(),
-                        'relative_humidity_2m': row.get('relative_humidity_2m'),
-                        'surface_pressure': row.get('surface_pressure'),
-                        'precipitation': row.get('precipitation'),
-                        'wind_speed_10m': row.get('wind_speed_10m'),
-                        'temperation_2m': row.get('temperation_2m'),
-                        'shortwave_radiation': row.get('shortwave_radiation')
-                    }
-                    conn.execute(text(insert_meteo_sql), meteo_data)
-
-            return jsonify(CommonResponse(
-                code="200",
-                msg="电站注册成功"
-            ).dict())
+            db = DataBase(**config.database)
+            db.insert(table='ustlf_station_info', df=station_info_df)
+            db.insert(table='ustlf_station_history_load', df=processed_load)
+            db.insert(table='ustlf_station_meteo_data', df=processed_meteo)
 
         except Exception as e:
-            return jsonify(CommonResponse(
-                code="500",
-                msg=f"数据存储失败: {str(e)}"
-            ).dict())
-        finally:
-            db.close()
+            logger.error(f"程序执行失败: {str(e)}")
+            sys.exit(1)
+
+        # try:
+        #     with db.engine.begin() as conn:
+        #         # 存储电站信息
+        #         db.insert()
+        #
+        #         insert_station_sql = """
+        #             INSERT INTO ustlf_station_info (
+        #                 site_id, site_name, longitude, latitude, stype,
+        #                 rated_capacity, rated_power, rated_power_pv,
+        #                 frequency_load, frequency_meteo, first_load_time, upload_time
+        #             ) VALUES (
+        #                 :site_id, :site_name, :longitude, :latitude, :stype,
+        #                 :rated_capacity, :rated_power, :rated_power_pv,
+        #                 :frequency_load, :frequency_meteo, :first_load_time, :upload_time
+        #             )
+        #         """
+        #         station_info = station_data.dict()
+        #         station_info['upload_time'] = datetime.now()
+        #         conn.execute(text(insert_station_sql), station_info)
+        #
+        #         # 存储历史负荷数据
+        #         for _, row in processed_load.iterrows():
+        #             insert_load_sql = """
+        #                 INSERT INTO ustlf_station_history_load (
+        #                     site_id, site_name, load_time, load_data, upload_time
+        #                 ) VALUES (
+        #                     :site_id, :site_name, :load_time, :load_data, :upload_time
+        #                 )
+        #             """
+        #             load_data = {
+        #                 'site_id': station_data.site_id,
+        #                 'site_name': station_data.site_name,
+        #                 'load_time': row['timestamp'],
+        #                 'load_data': row['load'],
+        #                 'upload_time': datetime.now()
+        #             }
+        #             conn.execute(text(insert_load_sql), load_data)
+        #
+        #         # 存储气象数据
+        #         for _, row in processed_meteo.iterrows():
+        #             insert_meteo_sql = """
+        #                 INSERT INTO ustlf_station_meteo_data (
+        #                     site_id, meteo_id, meteo_times, update_time,
+        #                     relative_humidity_2m, surface_pressure, precipitation,
+        #                     wind_speed_10m, temperature_2m, shortwave_radiation
+        #                 ) VALUES (
+        #                     :site_id, :meteo_id, :meteo_times, :update_time,
+        #                     :relative_humidity_2m, :surface_pressure, :precipitation,
+        #                     :wind_speed_10m, :temperature_2m, :shortwave_radiation
+        #                 )
+        #             """
+        #             meteo_data = {
+        #                 'site_id': station_data.site_id,
+        #                 'meteo_id': 1,  # 默认气象源ID
+        #                 'meteo_times': row['timestamp'],
+        #                 'update_time': datetime.now(),
+        #                 'relative_humidity_2m': row.get('relative_humidity_2m'),
+        #                 'surface_pressure': row.get('surface_pressure'),
+        #                 'precipitation': row.get('precipitation'),
+        #                 'wind_speed_10m': row.get('wind_speed_10m'),
+        #                 'temperature_2m': row.get('temperature_2m'),
+        #                 'shortwave_radiation': row.get('shortwave_radiation')
+        #             }
+        #             conn.execute(text(insert_meteo_sql), meteo_data)
+        #
+        #     return jsonify(CommonResponse(
+        #         code="200",
+        #         msg="电站注册成功"
+        #     ).dict())
+        #
+        # except Exception as e:
+        #     return jsonify(CommonResponse(
+        #         code="500",
+        #         msg=f"数据存储失败: {str(e)}"
+        #     ).model_dump())
+        # finally:
+        #     db.close()
 
     except Exception as e:
         return jsonify(CommonResponse(
             code="401",
             msg=f"参数验证失败: {str(e)}"
-        ).dict())
+        ).model_dump())
+    return jsonify(CommonResponse(
+            code="200",
+            msg=f"上传成功"
+        ).model_dump())
 
 
 # 2. 实时数据上传接口
@@ -148,7 +195,7 @@ def upload_real_time_data():
         processed_meteo = processor.process_meteo_data(meteo_df)
 
         # 存储数据
-        db = DatabaseConnection(Config().database)
+        db = DataBase(Config().database)
         try:
             with db.engine.begin() as conn:
                 # 获取电站名称
@@ -158,16 +205,16 @@ def upload_real_time_data():
                     return jsonify(CommonResponse(
                         code="401",
                         msg="电站不存在"
-                    ).dict())
+                    ).model_dump())
                 site_name = result[0]
 
                 # 存储实时负荷数据
                 for _, row in processed_load.iterrows():
                     insert_load_sql = """
                         INSERT INTO ustlf_station_history_load (
-                            site_id, site_name, load_timestamp, load_data, upload_time
+                            site_id, site_name, load_time, load_data, upload_time
                         ) VALUES (
-                            :site_id, :site_name, :load_timestamp, :load_data, :upload_time
+                            :site_id, :site_name, :load_time, :load_data, :upload_time
                         ) ON DUPLICATE KEY UPDATE
                             load_data = VALUES(load_data),
                             upload_time = VALUES(upload_time)
@@ -175,7 +222,7 @@ def upload_real_time_data():
                     load_data = {
                         'site_id': upload_data.site_id,
                         'site_name': site_name,
-                        'load_timestamp': row['timestamp'],
+                        'load_time': row['timestamp'],
                         'load_data': row['load'],
                         'upload_time': datetime.now()
                     }
@@ -187,17 +234,17 @@ def upload_real_time_data():
                         INSERT INTO ustlf_station_meteo_data (
                             site_id, meteo_id, meteo_times, update_time,
                             relative_humidity_2m, surface_pressure, precipitation,
-                            wind_speed_10m, temperation_2m, shortwave_radiation
+                            wind_speed_10m, temperature_2m, shortwave_radiation
                         ) VALUES (
                             :site_id, :meteo_id, :meteo_times, :update_time,
                             :relative_humidity_2m, :surface_pressure, :precipitation,
-                            :wind_speed_10m, :temperation_2m, :shortwave_radiation
+                            :wind_speed_10m, :temperature_2m, :shortwave_radiation
                         ) ON DUPLICATE KEY UPDATE
                             relative_humidity_2m = VALUES(relative_humidity_2m),
                             surface_pressure = VALUES(surface_pressure),
                             precipitation = VALUES(precipitation),
                             wind_speed_10m = VALUES(wind_speed_10m),
-                            temperation_2m = VALUES(temperation_2m),
+                            temperature_2m = VALUES(temperature_2m),
                             shortwave_radiation = VALUES(shortwave_radiation),
                             update_time = VALUES(update_time)
                     """
@@ -210,7 +257,7 @@ def upload_real_time_data():
                         'surface_pressure': row.get('surface_pressure'),
                         'precipitation': row.get('precipitation'),
                         'wind_speed_10m': row.get('wind_speed_10m'),
-                        'temperation_2m': row.get('temperation_2m'),
+                        'temperature_2m': row.get('temperature_2m'),
                         'shortwave_radiation': row.get('shortwave_radiation')
                     }
                     conn.execute(text(insert_meteo_sql), meteo_data)
@@ -218,13 +265,13 @@ def upload_real_time_data():
             return jsonify(CommonResponse(
                 code="200",
                 msg="实时数据上传成功"
-            ).dict())
+            ).model_dump())
 
         except Exception as e:
             return jsonify(CommonResponse(
                 code="500",
                 msg=f"数据存储失败: {str(e)}"
-            ).dict())
+            ).model_dump())
         finally:
             db.close()
 
@@ -232,7 +279,7 @@ def upload_real_time_data():
         return jsonify(CommonResponse(
             code="401",
             msg=f"参数验证失败: {str(e)}"
-        ).dict())
+        ).model_dump())
 
 
 # 3. 预测结果拉取接口
@@ -252,15 +299,15 @@ def get_forecast_result():
                 return jsonify(CommonResponse(
                     code="401",
                     msg="开始时间必须是15分钟的整数倍"
-                ).dict())
+                ).model_dump())
         except ValueError:
             return jsonify(CommonResponse(
                 code="401",
                 msg="时间格式错误，应为HH:MM格式"
-            ).dict())
+            ).model_dump())
 
         # 查询预测结果
-        db = DatabaseConnection(Config().database)
+        db = DataBase(Config().database)
         try:
             with db.engine.begin() as conn:
                 # 查询最新的预测结果
@@ -281,19 +328,19 @@ def get_forecast_result():
                     return jsonify(CommonResponse(
                         code="401",
                         msg="未找到预测结果"
-                    ).dict())
+                    ).model_dump())
 
                 return jsonify(CommonResponse(
                     code="200",
                     msg="获取预测结果成功",
                     data={"res": result[0]}
-                ).dict())
+                ).model_dump())
 
         except Exception as e:
             return jsonify(CommonResponse(
                 code="500",
                 msg=f"查询失败: {str(e)}"
-            ).dict())
+            ).model_dump())
         finally:
             db.close()
 
@@ -301,7 +348,7 @@ def get_forecast_result():
         return jsonify(CommonResponse(
             code="401",
             msg=f"参数验证失败: {str(e)}"
-        ).dict())
+        ).model_dump())
 
 
 # 4. 输入特征搜索接口
@@ -313,22 +360,22 @@ def feature_search():
         data = request.get_json()
         search_req = FeatureSearchRequest(**data)
 
-        db = DatabaseConnection(Config().database)
+        db = DataBase(Config().database)
         try:
             with db.engine.begin() as conn:
                 # 1. 获取历史负荷数据
                 load_query = """
-                    SELECT load_timestamp, load_data
+                    SELECT load_time, load_data
                     FROM ustlf_station_history_load
                     WHERE site_id = :site_id
-                    ORDER BY load_timestamp DESC
+                    ORDER BY load_time DESC
                 """
                 load_df = pd.read_sql(load_query, conn, params={'site_id': search_req.site_id})
 
                 # 2. 获取历史气象数据
                 meteo_query = """
                     SELECT meteo_times, relative_humidity_2m, surface_pressure, 
-                           precipitation, wind_speed_10m, temperation_2m, shortwave_radiation
+                           precipitation, wind_speed_10m, temperature_2m, shortwave_radiation
                     FROM ustlf_station_meteo_data
                     WHERE site_id = :site_id
                     ORDER BY meteo_times DESC
@@ -358,13 +405,13 @@ def feature_search():
                     code="200",
                     msg="特征搜索成功",
                     data={"features": features}
-                ).dict())
+                ).model_dump())
 
         except Exception as e:
             return jsonify(CommonResponse(
                 code="500",
                 msg=f"特征搜索失败: {str(e)}"
-            ).dict())
+            ).model_dump())
         finally:
             db.close()
 
@@ -372,7 +419,7 @@ def feature_search():
         return jsonify(CommonResponse(
             code="401",
             msg=f"参数验证失败: {str(e)}"
-        ).dict())
+        ).model_dump())
 
 
 # 5. 超参数搜索接口
@@ -383,7 +430,7 @@ def hyperparameter_search():
         data = request.get_json()
         hp_req = HyperParamSearchRequest(**data)
 
-        db = DatabaseConnection(Config().database)
+        db = DataBase(Config().database)
         try:
             with db.engine.begin() as conn:
                 # 1. 获取特征信息
@@ -399,7 +446,7 @@ def hyperparameter_search():
                     return jsonify(CommonResponse(
                         code="401",
                         msg="未找到特征信息，请先进行特征搜索"
-                    ).dict())
+                    ).model_dump())
 
                 # 2. 执行超参数搜索
                 from load_forecast_platform.trainer.param_optimizer import ParamOptimizer
@@ -421,13 +468,13 @@ def hyperparameter_search():
                     code="200",
                     msg="超参数搜索成功",
                     data={"hyperparameters": best_params}
-                ).dict())
+                ).model_dump())
 
         except Exception as e:
             return jsonify(CommonResponse(
                 code="500",
                 msg=f"超参数搜索失败: {str(e)}"
-            ).dict())
+            ).model_dump())
         finally:
             db.close()
 
@@ -435,7 +482,7 @@ def hyperparameter_search():
         return jsonify(CommonResponse(
             code="401",
             msg=f"参数验证失败: {str(e)}"
-        ).dict())
+        ).model_dump())
 
 
 # 6. 历史气象拉取接口
@@ -446,7 +493,7 @@ def get_history_meteo():
         data = request.get_json()
         meteo_req = HistoryMeteoRequest(**data)
 
-        db = DatabaseConnection(Config().database)
+        db = DataBase(Config().database)
         try:
             with db.engine.begin() as conn:
                 # 构建查询条件
@@ -464,7 +511,7 @@ def get_history_meteo():
                 # 查询历史气象数据
                 query = f"""
                     SELECT meteo_times, relative_humidity_2m, surface_pressure,
-                           precipitation, wind_speed_10m, temperation_2m, shortwave_radiation
+                           precipitation, wind_speed_10m, temperature_2m, shortwave_radiation
                     FROM ustlf_station_meteo_data
                     WHERE {' AND '.join(conditions)}
                     ORDER BY meteo_times DESC
@@ -475,14 +522,14 @@ def get_history_meteo():
                 return jsonify(CommonResponse(
                     code="200",
                     msg="获取历史气象数据成功",
-                    data={"meteo_data": meteo_data.to_dict(orient='records')}
-                ).dict())
+                    data={"meteo_data": meteo_data.to_model_dump(orient='records')}
+                ).model_dump())
 
         except Exception as e:
             return jsonify(CommonResponse(
                 code="500",
                 msg=f"获取历史气象数据失败: {str(e)}"
-            ).dict())
+            ).model_dump())
         finally:
             db.close()
 
@@ -490,7 +537,7 @@ def get_history_meteo():
         return jsonify(CommonResponse(
             code="401",
             msg=f"参数验证失败: {str(e)}"
-        ).dict())
+        ).model_dump())
 
 
 # 7. 模型训练接口
@@ -501,7 +548,7 @@ def train_model():
         data = request.get_json()
         train_req = ModelTrainRequest(**data)
 
-        db = DatabaseConnection(Config().database)
+        db = DataBase(Config().database)
         try:
             with db.engine.begin() as conn:
                 # 1. 获取特征和超参数信息
@@ -517,17 +564,17 @@ def train_model():
                     return jsonify(CommonResponse(
                         code="401",
                         msg="未找到特征和超参数信息，请先进行特征和超参数搜索"
-                    ).dict())
+                    ).model_dump())
 
                 feature_info = eval(info_result[0])
                 hyperparams = eval(info_result[1])
 
                 # 2. 获取训练数据
                 load_query = """
-                    SELECT load_timestamp, load_data
+                    SELECT load_time, load_data
                     FROM ustlf_station_history_load
                     WHERE site_id = :site_id
-                    ORDER BY load_timestamp
+                    ORDER BY load_time
                 """
                 load_df = pd.read_sql(load_query, conn, params={'site_id': train_req.site_id})
 
@@ -552,13 +599,13 @@ def train_model():
                     code="200",
                     msg="模型训练成功",
                     data={"model_path": model_path}
-                ).dict())
+                ).model_dump())
 
         except Exception as e:
             return jsonify(CommonResponse(
                 code="500",
                 msg=f"模型训练失败: {str(e)}"
-            ).dict())
+            ).model_dump())
         finally:
             db.close()
 
@@ -566,4 +613,4 @@ def train_model():
         return jsonify(CommonResponse(
             code="401",
             msg=f"参数验证失败: {str(e)}"
-        ).dict())
+        ).model_dump())

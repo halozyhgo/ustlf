@@ -10,7 +10,7 @@ def create_project_structure():
         'models': ['__init__.py', 'base_model.py', 'lstm_model.py', 'xgboost_model.py', 'model_factory.py'],
         'trainer': ['__init__.py', 'model_trainer.py', 'param_optimizer.py', 'evaluator.py'],
         'predictor': ['__init__.py', 'predictor.py', 'ensemble.py'],
-        'utils': ['__init__.py', 'config.py', 'logger.py', 'db_utils.py'],
+        'utils': ['__init__.py', 'config.py', 'logger.py', 'database.py'],
         'api': ['__init__.py', 'routes.py', 'schemas.py'],
         'tests': ['__init__.py', 'test_data_processor.py', 'test_models.py', 'test_predictor.py'],
         'scripts': ['train.py', 'predict.py', 'evaluate.py'],

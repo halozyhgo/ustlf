@@ -1,14 +1,12 @@
+# -*- coding: utf-8 -*-
 import traceback
 import pymysql
 import pandas as pd
 from loguru import logger
 
 class DataBase(object):
-
     def __init__(self, host, port, user, password, database):
-        """
-        配置数据库信息
-        """
+        """配置数据库信息"""
         self.host = host
         self.port = port
         self.user = user
@@ -16,13 +14,8 @@ class DataBase(object):
         self.database = database
         self._conn, self._cursor = None, None
 
-        # self.test_conn()
-
     def create_conn(self):
-        """
-        创建数据库连接
-        :return: None
-        """
+        """创建数据库连接"""
         self._conn = pymysql.connect(
             host=self.host,
             database=self.database,
@@ -34,18 +27,12 @@ class DataBase(object):
         self._cursor = self._conn.cursor(cursor=pymysql.cursors.DictCursor)
 
     def close_conn(self):
-        """
-        关闭数据库连接
-        :return: None
-        """
+        """关闭数据库连接"""
         self._conn.close()
         self._cursor.close()
 
     def test_conn(self):
-        """
-        关闭数据库连接
-        :return:
-        """
+        """测试数据库连接"""
         try:
             self.create_conn()
             self.close_conn()
@@ -54,10 +41,7 @@ class DataBase(object):
             logger.warning('数据库连接测试失败')
 
     def execute(self, sql):
-        """
-        执行数据库命令
-        :param sql: str
-        """
+        """执行SQL命令"""
         res = None
         try:
             self.create_conn()
@@ -67,44 +51,33 @@ class DataBase(object):
             self.close_conn()
         except:
             logger.warning(traceback.print_exc())
-            # handle case that connection is alive
             if self._conn.open:
                 self._conn.rollback()
                 self.close_conn()
-
         return res
 
     def query(self, sql):
-        """
-        查询数据表并返回dataframe
-        :param sql: str
-        :return: pd.DataFrame()
-        """
+        """查询并返回DataFrame"""
         df = pd.DataFrame(self.execute(sql))
         return df
 
     def insert(self, table, df):
-        """
-        将dataframe插入数据库
-        :param table: str, table name in database
-        :param df: pd.DataFrame()
-        :return: object or None
-        """
-        'check data'
+        """将DataFrame插入数据库"""
         df = df.astype(object).where(df.notnull(), None)
         df_cols, df_values = df.columns.tolist(), df.values.tolist()
 
-        'format data'
         key, placeholder = '', ''
         for i, col in enumerate(df_cols):
             key += f'`{col}`' if i == (len(df_cols) - 1) else f'`{col}`, '
             placeholder += '%s' if i == (len(df_cols) - 1) else f'%s, '
 
-        '创建表时已设定unique key,用REPLACE INTO可以达成无数据则插入,有数据则更新'
         res = None
         try:
             self.create_conn()
-            self._cursor.executemany(f"REPLACE INTO {table}({key}) VALUES({placeholder})", df_values)
+            self._cursor.executemany(
+                f"REPLACE INTO {table}({key}) VALUES({placeholder})", 
+                df_values
+            )
             self._conn.commit()
             res = self._cursor.fetchall()
             self.close_conn()
@@ -115,12 +88,7 @@ class DataBase(object):
         return res
 
     def delete(self, table, cond):
-        """
-        从数据表中删除满足条件的数据
-        :param table: str, table name in database
-        :param cond: str, describe the condition of selected data
-        :return: object or None
-        """
+        """删除满足条件的数据"""
         sql = f"DELETE FROM {table} WHERE {cond}"
         res = self.execute(sql)
         return res
