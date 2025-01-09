@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="正确版本-1">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/docs/超短期负荷预测-接口文件.docx" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/docs/超短期负荷预测-接口文件.docx" afterDir="false" />
-    </list>
+    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="完成历史气象拉取接口" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -285,7 +280,15 @@
       <option name="project" value="LOCAL" />
       <updated>1736409706926</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="完成历史气象拉取接口">
+      <option name="closed" value="true" />
+      <created>1736417428264</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1736417428264</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -309,7 +312,8 @@
     <MESSAGE value="确定好表结构" />
     <MESSAGE value="确定好表结构-v2" />
     <MESSAGE value="正确版本-1" />
-    <option name="LAST_COMMIT_MESSAGE" value="正确版本-1" />
+    <MESSAGE value="完成历史气象拉取接口" />
+    <option name="LAST_COMMIT_MESSAGE" value="完成历史气象拉取接口" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
