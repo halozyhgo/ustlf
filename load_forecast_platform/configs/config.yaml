@@ -18,7 +18,7 @@ model_params:
     min_child_samples: 20
     n_estimators: 1000
     boost_from_average: false
-    random_state: 0
+    random_state: 42
     verbosity: -1
     
   lstm:

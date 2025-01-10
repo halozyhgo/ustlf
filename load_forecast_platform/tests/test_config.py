@@ -36,6 +36,13 @@ def sample_config_path(tmp_path):
     
     return str(config_file)
 
+def test_model_params():
+    try:
+        config = Config()
+        print(config.config['model_params']['lightgbm'])
+    except Exception as e:
+        pytest.fail(f"加载默认配置文件失败: {str(e)}")
+
 def test_config_load_default():
     """测试默认配置文件加载"""
     try:

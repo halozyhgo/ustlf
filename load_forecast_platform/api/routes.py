@@ -521,7 +521,11 @@ def train_model():
         data = request.get_json()
         train_req = ModelTrainRequest(**data)
 
-        db = DataBase(Config().database)
+
+
+        config = Config()
+        config.
+        db = DataBase(**config.database)
         try:
             with db.engine.begin() as conn:
                 # 1. 获取特征和超参数信息

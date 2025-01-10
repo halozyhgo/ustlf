@@ -152,10 +152,10 @@ class ModelTrainRequest(BaseModel):
     def validate_end_date(cls, v):
         if v is not None:
             try:
-                datetime.strptime(v, "%Y-%m-%d %H:%M:%S")
+                datetime.strptime(v, "%Y-%m-%d %H:%M")
                 return v
             except ValueError:
-                raise ValueError('时间格式错误，应为YYYY-MM-DD HH:MM:SS格式')
+                raise ValueError('时间格式错误，应为YYYY-MM-DD HH:MM格式')
         return v
 
     @field_validator('model_params')
