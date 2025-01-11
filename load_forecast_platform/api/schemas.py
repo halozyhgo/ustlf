@@ -58,7 +58,7 @@ class RealTimeDataUploadRequest(BaseModel):
         # 检查必需的气象要素
         required_fields = {
             'timestamp', 'relative_humidity_2m', 'surface_pressure',
-            'precipitation', 'wind_speed_10m', 'temperation_2m'
+            'precipitation', 'wind_speed_10m', 'temperature_2m'
         }
         if not all(field in v for field in required_fields):
             raise ValueError(f'气象数据缺少必需字段: {required_fields}')
@@ -144,8 +144,8 @@ class ModelTrainRequest(BaseModel):
     """模型训练请求模型"""
     site_id: str = Field(..., description="电站id")
     end_date: Optional[str] = Field(None, description="输入训练结束时间(默认为当日20点)")
-    model_params: Optional[Dict[str, Any]] = Field(None, description="模型参数")
-    training_params: Optional[Dict[str, Any]] = Field(None, description="训练参数")
+    # model_params: Optional[Dict[str, Any]] = Field(None, description="模型参数")
+    # training_params: Optional[Dict[str, Any]] = Field(None, description="训练参数")
 
     @field_validator('end_date')
     @classmethod
@@ -158,14 +158,14 @@ class ModelTrainRequest(BaseModel):
                 raise ValueError('时间格式错误，应为YYYY-MM-DD HH:MM格式')
         return v
 
-    @field_validator('model_params')
-    @classmethod
-    def validate_model_params(cls, v):
-        if v is not None:
-            required_params = {'learning_rate', 'max_depth', 'n_estimators'}
-            if not all(param in v for param in required_params):
-                raise ValueError(f'模型参数缺少必需字段: {required_params}')
-        return v
+    # @field_validator('model_params')
+    # @classmethod
+    # def validate_model_params(cls, v):
+    #     if v is not None:
+    #         required_params = {'learning_rate', 'max_depth', 'n_estimators'}
+    #         if not all(param in v for param in required_params):
+    #             raise ValueError(f'模型参数缺少必需字段: {required_params}')
+    #     return v
 
 # 通用响应模型
 class CommonResponse(BaseModel):

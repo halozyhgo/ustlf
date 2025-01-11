@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+import os
+
 from flask import request, jsonify
+from loadFcst.utils import feature_engine
+from load_forecast_platform.models.lightgbm_model import ML_Model
 from load_forecast_platform.api import app
+from load_forecast_platform.data_processor.feature_engineer import FeatureEngineer
 from load_forecast_platform.utils.database import DataBase
 from load_forecast_platform.utils.config import Config
 from load_forecast_platform.data_processor.data_processor import DataProcessor
@@ -427,8 +432,8 @@ def get_history_meteo():
         db = DataBase(**config.database)
 
         sql_query = """
-            SELECT latitude, longitude 
-            FROM ustlf_station_info 
+            SELECT latitude, longitude
+            FROM ustlf_station_info
             WHERE site_id = '{}'
         """.format(meteo_req.site_id)
 
@@ -513,7 +518,6 @@ def get_history_meteo():
             msg=f"历史气象拉取成功"
         ).model_dump())
 
-# 7. 模型训练接口
 @app.route('/ustlf/station/model_train', methods=['POST'])
 def train_model():
     """模型训练接口"""
@@ -521,73 +525,97 @@ def train_model():
         data = request.get_json()
         train_req = ModelTrainRequest(**data)
 
-
-
         config = Config()
-        config.
+        model_param = config.config['model_params']['lightgbm']
+        # train_param = config['lightgbm_training']
+
         db = DataBase(**config.database)
-        try:
-            with db.engine.begin() as conn:
-                # 1. 获取特征和超参数信息
-                info_query = """
-                    SELECT feature_info, hyperparams_info
-                    FROM ustlf_model_feature_hp_info
-                    WHERE site_id = :site_id
-                """
-                info_result = conn.execute(text(info_query),
-                                           {'site_id': train_req.site_id}).fetchone()
+        # 1、从表中获取模型超参数和输入特征
+        info_query = """SELECT feature_info, hyperparams_info
+                        FROM ustlf_model_feature_hp_info
+                        WHERE site_id = '{}'
+                        """.format(train_req.site_id)
+        res = db.query(info_query)
+        if len(res)==0:
+            feature_info_table = None
+            hyperparams_info_table = None
+        else:
+            feature_info_table = res['feature_info']
+            hyperparams_info_table = res['hyperparams_info']
+        # # 如果没有就使用默认值
+        # if not feature_info_table:
+        #     feature_input = 122     #从yaml获取
+        # else:
+        #     feature_info = feature_info_table
+        hyperparams = model_param
+        if hyperparams_info_table:
+            hyperparams = hyperparams_info_table
 
-                if not info_result:
-                    return jsonify(CommonResponse(
-                        code="401",
-                        msg="未找到特征和超参数信息，请先进行特征和超参数搜索"
-                    ).model_dump())
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        if train_req.end_date:
+            end_date = train_req.end_date
 
-                feature_info = eval(info_result[0])
-                hyperparams = eval(info_result[1])
 
-                # 2. 获取训练数据
-                load_query = """
-                    SELECT load_time, load_data
-                    FROM ustlf_station_history_load
-                    WHERE site_id = :site_id
-                    ORDER BY load_time
-                """
-                load_df = pd.read_sql(load_query, conn, params={'site_id': train_req.site_id})
+        # 2、从表中获取训练数据（）
+        # todo:获取历史负荷
+        load_query = """
+                            SELECT load_time, load_data
+                            FROM ustlf_station_history_load
+                            WHERE site_id = '{}' AND load_time<'{}'
+                            ORDER BY load_time
+                        """.format(train_req.site_id,end_date)
+        load_df = db.query(load_query)
 
-                meteo_query = """
-                    SELECT *
-                    FROM ustlf_station_meteo_data
-                    WHERE site_id = :site_id
-                    ORDER BY meteo_times
-                """
-                meteo_df = pd.read_sql(meteo_query, conn, params={'site_id': train_req.site_id})
+        # todo:获取气象负荷
+        meteo_query = """
+                            SELECT *
+                            FROM ustlf_station_meteo_data
+                            WHERE site_id = '{}' AND meteo_times <'{}'
+                            ORDER BY meteo_times
+                        """.format(train_req.site_id,end_date)
+        meteo_df = db.query(meteo_query)
 
-                # 3. 训练模型
-                from load_forecast_platform.trainer.model_trainer import ModelTrainer
-                trainer = ModelTrainer(feature_info, hyperparams)
-                model = trainer.train(load_df, meteo_df)
+        # todo: 将气象数据与负荷数据结合，然后根据现在的特征组合，分类出输入特征和标签，
+        H_list = [i * 0.25 for i in range(1, 17)]
+        feature_list = [
+            'relative_humidity_2m',
+            'surface_pressure',
+            'precipitation',
+            'wind_speed_10m',
+            'temperature_2m',
+            'shortwave_radiation',
+        ]
+        df_list = []
+        for H in H_list:
+            feature_engine = FeatureEngineer()
+            df_i,feature_columns = feature_engine.extract_features(load_df, meteo_df,h=H)
+            df_i_copy = df_i.copy()
+            df_list.append(df_i_copy)
+        feature_list.extend(feature_columns)
+        input_feature = feature_list
+        if feature_info_table:  # 如果取得模型输入参数，更改为从数据库中获取的模型
+            input_feature = feature_info_table
 
-                # 4. 保存模型
-                model_path = f"models/site_{train_req.site_id}_model.pkl"
-                model.save(model_path)
+        input_feature = list(set(input_feature))
+        # todo: 对list中的每个数据集进行训练，保存模型以电站id为目录名，i表示预测的未来第几个负荷值的模型
+        for i,df in enumerate(df_list):
+            X_train,Y_train = df[input_feature], df['load_data']
+            model_path = "../models_pkl/site_id_{}".format(train_req.site_id)
+            lgb_model = ML_Model(model_name='site_id_{}_model_{}'.format(train_req.site_id,i),model_params=hyperparams,model_path=model_path)
+            lgb_model.get_model()
+            lgb_model.model_train(X_train,Y_train)
+            lgb_model.save_model()
 
-                return jsonify(CommonResponse(
-                    code="200",
-                    msg="模型训练成功",
-                    data={"model_path": model_path}
-                ).model_dump())
-
-        except Exception as e:
-            return jsonify(CommonResponse(
-                code="500",
-                msg=f"模型训练失败: {str(e)}"
-            ).model_dump())
-        finally:
-            db.close()
+        return jsonify(CommonResponse(
+            code="200",
+            msg="模型训练成功",
+            data={"model_path保存到文件中": model_path}
+        ).model_dump())
 
     except Exception as e:
         return jsonify(CommonResponse(
-            code="401",
-            msg=f"参数验证失败: {str(e)}"
+            code="500",
+            msg=f"模型训练失败: {str(e)}"
         ).model_dump())
+    # finally:
+    #     db.close_conn()

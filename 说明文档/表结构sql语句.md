@@ -115,7 +115,7 @@ CREATE TABLE ustlf_station_meteo_mapping (
 | surface_pressure     | 气压         |          |
 | precipitation        | 降水量       |          |
 | wind_speed_10m       | 10m高度风速  |          |
-| temperation_2m       | 2m高度温度   |          |
+| temperature_2m       | 2m高度温度   |          |
 | shortwave_radiation  | 向下短波辐照 |          |
 
 ```sql
@@ -128,7 +128,7 @@ CREATE TABLE ustlf_station_meteo_data (
     surface_pressure DECIMAL(10, 2),          -- 气压（可为空，支持两位小数）
     precipitation DECIMAL(10, 2),             -- 降水量（可为空，支持两位小数）
     wind_speed_10m DECIMAL(5, 2),             -- 10m高度风速（可为空，支持两位小数）
-    temperation_2m DECIMAL(5, 2),             -- 2m高度温度（可为空，支持两位小数）
+    temperature_2m DECIMAL(5, 2),             -- 2m高度温度（可为空，支持两位小数）
     shortwave_radiation DECIMAL(10, 2),       -- 向下短波辐照（可为空，支持两位小数）
     PRIMARY KEY (Site_Id, Meteo_Id, Timestamp) -- 联合主键：电站id + 气象id + 时间戳
 );

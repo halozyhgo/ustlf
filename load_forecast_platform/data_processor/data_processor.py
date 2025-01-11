@@ -49,7 +49,7 @@ class DataProcessor:
         
         # 4. 异常值处理
         for col in ['relative_humidity_2m', 'surface_pressure', 'precipitation',
-                   'wind_speed_10m', 'temperation_2m', 'shortwave_radiation']:
+                   'wind_speed_10m', 'temperature_2m', 'shortwave_radiation']:
             if col in df.columns:
                 df[col] = self._handle_outliers(df[col])
         

@@ -21,28 +21,35 @@ class FeatureEngineer:
         
         self.weather_features = [
             'relative_humidity_2m', 'surface_pressure', 'precipitation',
-            'wind_speed_10m', 'temperation_2m', 'shortwave_radiation'
+            'wind_speed_10m', 'temperature_2m', 'shortwave_radiation'
         ]
 
-    def extract_features(self, load_df, meteo_df, horizon=24):
+    def extract_features(self, load_df, meteo_df, h=0.25):
         """
         提取特征
         Args:
             load_df: 负荷数据DataFrame
             meteo_df: 气象数据DataFrame
-            horizon: 预测时长(小时)
+            h: 距离预测点时长(小时)
         Returns:
             特征DataFrame和特征名列表
         """
         try:
-            df = load_df.copy()
-            df = df.join(meteo_df)
-            
+            # df = load_df.copy()
+            # df = df.join(meteo_df)
+            load_df.set_index(pd.to_datetime(load_df['load_time']), inplace=True)
+            meteo_df.set_index(pd.to_datetime(meteo_df['meteo_times']), inplace=True)
+
+            df = load_df.join(meteo_df)
+
+            to_numeric_list = ['load_data','relative_humidity_2m', 'surface_pressure', 'precipitation', 'wind_speed_10m', 'temperature_2m', 'shortwave_radiation']
+            # todo: 将数值的列转化成数值型
+            df[to_numeric_list] = df[to_numeric_list].apply(pd.to_numeric, errors='coerce')
             # 1. 时间特征
             df = self._extract_time_features(df)
             
             # 2. 负荷特征
-            df = self._extract_load_features(df, horizon)
+            df,add_fea_res = self._extract_load_features(df, h)
             
             # 3. 气象特征
             df = self._extract_weather_features(df)
@@ -50,8 +57,9 @@ class FeatureEngineer:
             # 获取所有特征列名
             feature_columns = (
                 self.time_features + 
-                self._get_load_feature_names(horizon) +
-                self._get_weather_feature_names()
+                self._get_load_feature_names(h) +
+                self._get_weather_feature_names()+
+                add_fea_res
             )
             
             logger.info(f"特征工程完成，共生成 {len(feature_columns)} 个特征")
@@ -72,11 +80,17 @@ class FeatureEngineer:
         df['holiday'] = df.index.map(lambda x: int(is_holiday(x)))
         return df
 
-    def _extract_load_features(self, df, horizon):
+    def _extract_load_features(self, df, h):
         """提取负荷特征"""
         # 基础特征
-        df['before_value'] = df['load'].shift(horizon * 4)  # 前H小时负荷
-        df['shift_value'] = df['load'].shift(96)  # 前一天同期负荷
+        res = []
+        df['before_value'] = df['load_data'].shift(int(h * 4))  # 前H小时负荷
+        df['shift_value'] = df['load_data'].shift(96)  # 前一天同期负荷
+
+        for i in range(1, 4 * 2 + 1):
+            # print("新增加的一些特征-1")
+            df['past_{}_value'.format(i)] = df['before_value'].shift(i)
+            res.append('past_{}_value'.format(i))
         
         # 4小时滑动窗口特征
         df['4H_value_mean'] = df['before_value'].rolling('4H').mean()
@@ -89,19 +103,24 @@ class FeatureEngineer:
         df['value_mean'] = df['shift_value'].rolling(96).mean()
         df['value_var'] = df['shift_value'].rolling(96).var()
         df['value_std'] = df['shift_value'].rolling(96).std()
-        
+        df['value_min'].fillna(method='ffill', inplace=True)
+        df['value_max'].fillna(method='ffill', inplace=True)
+
+        # 前后的线性插值
+        df['shift_value'] = df['shift_value'].interpolate(method='linear', limit_direction='both')
         # 差分特征
         for i in range(1, 5):
             df[f'diff_{i}'] = df['shift_value'].diff(i)
+            df[f'diff_{i}'].fillna(method='bfill', inplace=True)
         
         # 历史负荷特征
         for i in range(1, 8):  # 前7天
             for j in [94, 95, 96, 97, 98]:  # 前后2个点
                 col_name = f'last_{i*j}_load'
-                df[col_name] = df['load'].shift(i*j)
+                df[col_name] = df['load_data'].shift(i*j)
                 self.load_features.append(col_name)
         
-        return df
+        return df,res
 
     def _extract_weather_features(self, df):
         """提取气象特征"""
@@ -110,7 +129,7 @@ class FeatureEngineer:
             df[f'future_{feature}'] = df[feature].shift(-96)
         return df
 
-    def _get_load_feature_names(self, horizon):
+    def _get_load_feature_names(self, r):
         """获取负荷特征名列表"""
         base_features = self.load_features.copy()
         

@@ -4,12 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="完成历史气象拉取接口">
-      <change afterPath="$PROJECT_DIR$/load_forecast_platform/tests/self_test.py" afterDir="false" />
+    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="2025-1-10修改模型训练接口之前版本">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/configs/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/configs/config.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/tests/test_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/tests/test_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_forecast_platform/data_processor/data_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/data_processor/data_processor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_forecast_platform/models/lightgbm_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/models/lightgbm_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_input/历史气象拉取接口.txt" beforeDir="false" afterPath="$PROJECT_DIR$/test_input/历史气象拉取接口.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/说明文档/表结构sql语句.md" beforeDir="false" afterPath="$PROJECT_DIR$/说明文档/表结构sql语句.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,6 +23,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Flask Main" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -53,7 +57,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Flask server.Flask (load_forecast_platform/api/__init__.py).executor": "Run",
+    "Flask server.Flask (load_forecast_platform/api/__init__.py).executor": "Debug",
     "Python tests.Python tests for test_config.test_config_load_default.executor": "Run",
     "Python tests.Python tests for test_config.test_model_params.executor": "Run",
     "Python.app.executor": "Run",
@@ -70,7 +74,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -85,7 +89,7 @@
       <recent name="D:\CodeData\USLF_pro\说明文档" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.self_test">
+  <component name="RunManager" selected="Flask server.Flask (load_forecast_platform/api/__init__.py)">
     <configuration name="routes" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="USLF_pro" />
       <option name="ENV_FILES" value="" />
@@ -198,10 +202,10 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Flask server.Flask (load_forecast_platform/api/__init__.py)" />
         <item itemvalue="Python.self_test" />
         <item itemvalue="Python tests.Python tests for test_config.test_model_params" />
         <item itemvalue="Python tests.Python tests for test_config.test_config_load_default" />
-        <item itemvalue="Flask server.Flask (load_forecast_platform/api/__init__.py)" />
         <item itemvalue="Python.routes" />
       </list>
     </recent_temporary>
@@ -226,7 +230,7 @@
       <workItem from="1736209242483" duration="15793000" />
       <workItem from="1736297136248" duration="29729000" />
       <workItem from="1736382289349" duration="5822000" />
-      <workItem from="1736468204129" duration="1799000" />
+      <workItem from="1736468204129" duration="35271000" />
     </task>
     <task id="LOCAL-00001" summary="初次配置后的项目v1">
       <option name="closed" value="true" />
@@ -300,7 +304,15 @@
       <option name="project" value="LOCAL" />
       <updated>1736417585107</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="2025-1-10修改模型训练接口之前版本">
+      <option name="closed" value="true" />
+      <created>1736471208390</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1736471208390</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -325,7 +337,8 @@
     <MESSAGE value="确定好表结构-v2" />
     <MESSAGE value="正确版本-1" />
     <MESSAGE value="完成历史气象拉取接口" />
-    <option name="LAST_COMMIT_MESSAGE" value="完成历史气象拉取接口" />
+    <MESSAGE value="2025-1-10修改模型训练接口之前版本" />
+    <option name="LAST_COMMIT_MESSAGE" value="2025-1-10修改模型训练接口之前版本" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -371,74 +384,49 @@
           <option name="timeStamp" value="12" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/utils/database.py</url>
-          <line>77</line>
-          <option name="timeStamp" value="52" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/utils/database.py</url>
-          <line>85</line>
-          <option name="timeStamp" value="53" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/utils/database.py</url>
-          <line>84</line>
-          <option name="timeStamp" value="54" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/utils/database.py</url>
-          <line>81</line>
-          <option name="timeStamp" value="55" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/utils/database.py</url>
-          <line>82</line>
-          <option name="timeStamp" value="56" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>470</line>
-          <option name="timeStamp" value="73" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>471</line>
+          <line>476</line>
           <option name="timeStamp" value="74" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>439</line>
-          <option name="timeStamp" value="76" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>457</line>
-          <option name="timeStamp" value="77" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>483</line>
+          <line>488</line>
           <option name="timeStamp" value="78" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>494</line>
+          <line>499</line>
           <option name="timeStamp" value="79" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>440</line>
-          <option name="timeStamp" value="86" />
+          <line>603</line>
+          <option name="timeStamp" value="94" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>442</line>
-          <option name="timeStamp" value="87" />
+          <line>604</line>
+          <option name="timeStamp" value="130" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>453</line>
-          <option name="timeStamp" value="88" />
+          <line>605</line>
+          <option name="timeStamp" value="131" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
+          <line>606</line>
+          <option name="timeStamp" value="132" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/load_forecast_platform/models/lightgbm_model.py</url>
+          <line>52</line>
+          <option name="timeStamp" value="138" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
+          <line>618</line>
+          <option name="timeStamp" value="139" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -449,7 +437,7 @@
     <SUITE FILE_PATH="coverage/USLF_pro$init_db.coverage" NAME="init_db Coverage Results" MODIFIED="1736400343420" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/scripts" />
     <SUITE FILE_PATH="coverage/USLF_pro$app.coverage" NAME="app Coverage Results" MODIFIED="1736153446990" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/USLF_pro$config.coverage" NAME="config Coverage Results" MODIFIED="1736316705308" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/utils" />
-    <SUITE FILE_PATH="coverage/USLF_pro$Flask__load_forecast_platform_api___init___py_.coverage" NAME="Flask (load_forecast_platform/api/__init__.py) Coverage Results" MODIFIED="1736416218015" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/USLF_pro$self_test.coverage" NAME="self_test Coverage Results" MODIFIED="1736470154857" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/tests" />
+    <SUITE FILE_PATH="coverage/USLF_pro$Flask__load_forecast_platform_api___init___py_.coverage" NAME="Flask (load_forecast_platform/api/__init__.py) Coverage Results" MODIFIED="1736561701852" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
   </component>
 </project>
