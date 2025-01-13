@@ -12,7 +12,7 @@ from load_forecast_platform.data_processor.data_processor import DataProcessor
 from load_forecast_platform.api.schemas import (
     StationRegisterRequest, RealTimeDataUploadRequest, ForecastRequest,
     FeatureSearchRequest, HyperParamSearchRequest, HistoryMeteoRequest,
-    ModelTrainRequest, CommonResponse
+    ModelTrainRequest, CommonResponse, ForecastMeteoRequest
 )
 
 import sys
@@ -603,6 +603,7 @@ def get_history_meteo():
             msg=f"历史气象拉取成功"
         ).model_dump())
 
+# 7. 模型训练接口
 @app.route('/ustlf/station/model_train', methods=['POST'])
 def train_model():
     """模型训练接口"""
@@ -691,3 +692,91 @@ def train_model():
         ).model_dump())
     # finally:
     #     db.close_conn()
+
+
+# 7. 预测气象保存
+@app.route('/ustlf/station/get_forcast_meteo', methods=['POST'])
+def get_forcast_meteo():
+    """预测气象拉取接口"""
+    try:
+        data = request.get_json()
+        meteo_req = ForecastMeteoRequest(**data)
+
+        # # 获取数据库连接
+        logger.info("开始初始化数据库...")
+        config = Config()
+        logger.info("配置加载成功")
+        logger.info(f"数据库配置: {config.database}")
+        db = DataBase(**config.database)
+
+        sql_query = """
+            SELECT latitude, longitude
+            FROM ustlf_station_info
+            WHERE site_id = '{}'
+        """.format(meteo_req.site_id)
+
+        site_info = db.query(sql_query)
+        latitude = float(site_info['latitude'])
+        longitude = float(site_info['longitude'])
+
+        # 处理时间参数
+        current_time = datetime.now()
+
+        # 调用气象API
+        url = "http://8.212.49.208:5009/weather"
+        headers = {'apikey': 'renewable_api_key'}
+        params = {
+            'latitude': latitude,
+            'longitude': longitude,
+            'timezone': 'Asia/Shanghai',
+            'forecast_days': 4,
+            'interval': '15T',
+            # 'start_date': start_time,
+            # 'end_date': end_time,
+            'par': 'shortwave_radiation,temperature_2m,relative_humidity_2m,surface_pressure,precipitation,wind_speed_10m'
+        }
+
+        response = requests.get(url=url, params=params, headers=headers)
+        res = response.json()
+        data = res['par']
+
+        # 处理API返回数据
+        temperature = data['temperature_2m']
+        pressure = data['surface_pressure']
+        humidity = data['relative_humidity_2m']
+        irradiation = data['shortwave_radiation']
+        precipitation = data['precipitation']
+        wind_speed_10m = data['wind_speed_10m']
+        timestamp = data['time']
+
+        data_dict = {
+            'meteo_times':timestamp,
+            'temperature_2m': temperature,
+            'surface_pressure': pressure,
+            'relative_humidity_2m': humidity,
+            'shortwave_radiation': irradiation,
+            'wind_speed_10m': wind_speed_10m,
+            'precipitation': precipitation
+        }
+
+        # 创建DataFrame并添加站点信息
+        df = pd.DataFrame(data_dict)
+        df['site_id'] = meteo_req.site_id
+        df['meteo_id'] = meteo_req.meteo_id
+        df['update_time'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
+
+        # 存储到数据库
+
+        db.insert(table='ustlf_station_forecast_meteo_data',df=df)
+
+
+    except Exception as e:
+        return jsonify(CommonResponse(
+            code="401",
+            msg=f"参数验证失败: {str(e)}"
+        ).model_dump())
+
+    return jsonify(CommonResponse(
+            code="200",
+            msg=f"预测气象拉取成功"
+        ).model_dump())

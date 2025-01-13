@@ -66,7 +66,7 @@ def create_tables(db):
         );
         """
 
-    # 创建电站气象数据表
+    # 创建历史电站气象数据表
     station_meteo_data_table = """
         create table if not exists ustlf_station_meteo_data (
             idx bigint auto_increment primary key,  -- 自增主键（BIGINT）
@@ -83,6 +83,23 @@ def create_tables(db):
             unique key (site_id, meteo_id,meteo_times) -- 联合唯一约束
         );
         """
+    # 创建电站各个更新点对应的预测气象数据表
+    station_meteo_forecast_data_table = """
+            create table if not exists ustlf_station_forecast_meteo_data (
+                idx bigint auto_increment primary key,  -- 自增主键（BIGINT）
+                site_id varchar(50) not null,           -- 电站id（不可为空，唯一）
+                meteo_id int not null,                  -- 气象id（不可为空，唯一）
+                meteo_times datetime not null,          -- 时间戳（不可为空，唯一）
+                update_time datetime not null,          -- 更新时间（不可为空）
+                relative_humidity_2m decimal(5, 2) not null,        -- 2m相对湿度（不可为空，支持两位小数）
+                surface_pressure decimal(10, 2) not null,           -- 气压（不可为空，支持两位小数）
+                precipitation decimal(10, 2) not null,              -- 降水量（不可为空，支持两位小数）
+                wind_speed_10m decimal(5, 2) not null,              -- 10m高度风速（不可为空，支持两位小数）
+                temperature_2m decimal(5, 2) not null,              -- 2m高度温度（不可为空，支持两位小数）
+                shortwave_radiation decimal(10, 2),                 -- 向下短波辐照（可为空，支持两位小数）
+                unique key (site_id, meteo_id,meteo_times,update_time) -- 联合唯一约束
+            );
+            """
 
     # 创建预测结果表
     pred_res_table =  """
@@ -131,6 +148,7 @@ def create_tables(db):
             ('ustlf_meteo_info', meteo_info_table),
             ('ustlf_station_meteo_mapping', station_meteo_mapping_table),
             ('ustlf_station_meteo_data', station_meteo_data_table),
+            ('ustlf_station_meteo_forecast_data',station_meteo_forecast_data_table),
             ('ustlf_pred_res', pred_res_table),
             ('ustlf_log_info', log_info_table),
             ('ustlf_model_feature_hp_info', model_feature_hp_info_table)

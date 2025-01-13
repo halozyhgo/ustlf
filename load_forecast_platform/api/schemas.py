@@ -101,19 +101,13 @@ class HistoryMeteoRequest(BaseModel):
     """历史气象拉取请求模型"""
     site_id: str = Field(..., description="电站id")
     meteo_id: Optional[int] = Field(None, description="气象id(默认为研究院气象)")
-    start_time: Optional[str] = Field(None, description="默认为日前3天")
-    end_time: Optional[str] = Field(None, description="搜索结束时间(默认为当日19点)")
+    # start_time: Optional[str] = Field(None, description="默认为日前3天")
+    # end_time: Optional[str] = Field(None, description="搜索结束时间(默认为当日19点)")
 
-    @field_validator('end_time')
-    @classmethod
-    def validate_end_time(cls, v):
-        if v is not None:
-            try:
-                datetime.strptime(v, "%Y-%m-%d")
-                return v
-            except ValueError:
-                raise ValueError('时间格式错误，应为YYYY-MM-DD格式')
-        return v
+class ForecastMeteoRequest(BaseModel):
+    """历史气象拉取请求模型"""
+    site_id: str = Field(..., description="电站id")
+    meteo_id: Optional[int] = Field(1, description="气象id(默认为研究院气象)")
 
     @field_validator('meteo_id')
     @classmethod
@@ -121,6 +115,7 @@ class HistoryMeteoRequest(BaseModel):
         if v is not None and v <= 0:
             raise ValueError('气象id必须大于0')
         return v
+
 
 class ModelTrainRequest(BaseModel):
     """模型训练请求模型"""
