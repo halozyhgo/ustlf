@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="实时数据上传接口修改前版本">
-      <change beforePath="$PROJECT_DIR$/.idea/USLF_pro.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/USLF_pro.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/scripts/init_db.py" afterDir="false" />
-    </list>
+    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="实时数据上传接口修改前版本" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -44,6 +37,12 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/halozyhgo/ustlf.git",
+    "accountId": "8778691c-b771-43f0-8b40-ac6ada064ee0"
+  }
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
 }</component>
@@ -230,7 +229,7 @@
       <workItem from="1736297136248" duration="29729000" />
       <workItem from="1736382289349" duration="5822000" />
       <workItem from="1736468204129" duration="53554000" />
-      <workItem from="1736730390482" duration="11394000" />
+      <workItem from="1736730390482" duration="11773000" />
     </task>
     <task id="LOCAL-00001" summary="初次配置后的项目v1">
       <option name="closed" value="true" />
@@ -328,7 +327,15 @@
       <option name="project" value="LOCAL" />
       <updated>1736736198538</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="实时数据上传接口修改前版本">
+      <option name="closed" value="true" />
+      <created>1736761908062</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1736761908062</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
