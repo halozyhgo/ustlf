@@ -39,6 +39,7 @@ def register_station():
 
         # 处理历史负荷数据
         load_df = pd.DataFrame(station_data.his_load)
+        load_df['load_data'] = pd.to_numeric(load_df['load_data'],errors='coerce')
         processed_load = processor.process_load_data(load_df)
         processed_load['site_id']= station_data.site_id
         processed_load['upload_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -115,11 +116,91 @@ def upload_real_time_data():
         upload_data = RealTimeDataUploadRequest(**data)
 
         # 处理数据
-        processor = DataProcessor()
+        new_data = upload_data.real_his_load
 
+        config = Config()
+        model_param = config.config['model_params']['lightgbm']
+        # train_param = config['lightgbm_training']
+
+        db = DataBase(**config.database)
+        # 1、从表中获取模型超参数和输入特征
+        info_query = """SELECT feature_info, hyperparams_info
+                        FROM ustlf_model_feature_hp_info
+                        WHERE site_id = '{}'
+                        """.format(upload_data.site_id)
+        res = db.query(info_query)
+        if len(res)==0:
+            feature_info_table = None
+            hyperparams_info_table = None
+        else:
+            feature_info_table = res['feature_info']
+            hyperparams_info_table = res['hyperparams_info']
+        hyperparams = model_param
+        if hyperparams_info_table:
+            hyperparams = hyperparams_info_table
+
+        end_date = datetime.now().strftime('%Y-%m-%d')
+
+
+        # 2、从表中获取训练数据（）
+        # todo:获取历史负荷
+        load_query = """
+                            SELECT load_time, load_data
+                            FROM ustlf_station_history_load
+                            WHERE site_id = '{}' AND load_time<'{}'
+                            ORDER BY load_time
+                        """.format(upload_data.site_id,end_date)
+        load_df = db.query(load_query)
+
+        # todo:获取气象负荷
+        meteo_query = """
+                            SELECT *
+                            FROM ustlf_station_meteo_data
+                            WHERE site_id = '{}' AND meteo_times <'{}'
+                            ORDER BY meteo_times
+                        """.format(upload_data.site_id,end_date)
+        meteo_df = db.query(meteo_query)
+
+        # todo: 将气象数据与负荷数据结合，然后根据现在的特征组合，分类出输入特征和标签，
+        H_list = [i * 0.25 for i in range(1, 17)]
+        df_list = []
+        #
+
+
+
+
+
+
+        '''
+        todo:
+        数据准备
+        0、获取最新的历史负荷数据
+        1、从数据库中拉取过去8天的负荷数据
+        2、从数据库中拉取过去8天的气象数据
+        3、从气象源地址拉取未来3天的气象数据
+        
+        根据预测尺度获取不同预测尺度的输入数据
+        
+        4、将负荷数据与历史气象合并，获取对应，然后获取对应的输入特征
+        5、将对应时间的预测气象换为从气象源拉取的气象
+        
+        加载预测模型
+        1、从models_pkl文件中获取对应电站的模型，然后载对应电站id且预测第几个点的模型
+        
+        
+        2、每个模型进行预测并输出
+        3、按照时间维度拼接在一起
+        4、汇总成16个点的预测结果
+        5、存回数据库 [site_id,begin_time,res_data]
+        6、返回结果
+        '''
         # 处理实时负荷数据
         load_df = pd.DataFrame(upload_data.real_his_load)
         processed_load = processor.process_load_data(load_df)
+
+
+        # 获取实时气象数据
+
 
         # 处理实时气象数据
         meteo_df = pd.DataFrame(upload_data.real_his_meteo)
@@ -211,6 +292,10 @@ def upload_real_time_data():
             code="401",
             msg=f"参数验证失败: {str(e)}"
         ).model_dump())
+
+    pred_json = {[1,2,3,4,5]}
+    ulr = data.url
+    request.post(url,pred)
 
 
 # 3. 预测结果拉取接口
@@ -542,11 +627,6 @@ def train_model():
         else:
             feature_info_table = res['feature_info']
             hyperparams_info_table = res['hyperparams_info']
-        # # 如果没有就使用默认值
-        # if not feature_info_table:
-        #     feature_input = 122     #从yaml获取
-        # else:
-        #     feature_info = feature_info_table
         hyperparams = model_param
         if hyperparams_info_table:
             hyperparams = hyperparams_info_table
@@ -577,30 +657,22 @@ def train_model():
 
         # todo: 将气象数据与负荷数据结合，然后根据现在的特征组合，分类出输入特征和标签，
         H_list = [i * 0.25 for i in range(1, 17)]
-        feature_list = [
-            'relative_humidity_2m',
-            'surface_pressure',
-            'precipitation',
-            'wind_speed_10m',
-            'temperature_2m',
-            'shortwave_radiation',
-        ]
         df_list = []
         for H in H_list:
             feature_engine = FeatureEngineer()
             df_i,feature_columns = feature_engine.extract_features(load_df, meteo_df,h=H)
             df_i_copy = df_i.copy()
             df_list.append(df_i_copy)
-        feature_list.extend(feature_columns)
-        input_feature = feature_list
+        input_feature = feature_columns
         if feature_info_table:  # 如果取得模型输入参数，更改为从数据库中获取的模型
             input_feature = feature_info_table
 
         input_feature = list(set(input_feature))
         # todo: 对list中的每个数据集进行训练，保存模型以电站id为目录名，i表示预测的未来第几个负荷值的模型
         for i,df in enumerate(df_list):
+            df = df[:-96]
             X_train,Y_train = df[input_feature], df['load_data']
-            model_path = "../models_pkl/site_id_{}".format(train_req.site_id)
+            model_path = "./models_pkl/site_id_{}".format(train_req.site_id)
             lgb_model = ML_Model(model_name='site_id_{}_model_{}'.format(train_req.site_id,i),model_params=hyperparams,model_path=model_path)
             lgb_model.get_model()
             lgb_model.model_train(X_train,Y_train)

@@ -36,32 +36,14 @@ class StationRegisterRequest(BaseModel):
 class RealTimeDataUploadRequest(BaseModel):
     """实时数据上传请求模型"""
     site_id: str = Field(..., description="电站id")
-    real_his_load: Dict[str, Any] = Field(..., description="实时负荷数据")
-    real_his_meteo: Dict[str, Any] = Field(..., description="实时气象数据")
+    real_his_load: List[Any] = Field(..., description="实时负荷数据")
+    # real_his_meteo: Dict[str, Any] = Field(..., description="实时气象数据")
 
     @field_validator('real_his_load')
     @classmethod
     def validate_load_data(cls, v):
-        if not isinstance(v, dict) or not v:
+        if not isinstance(v, list) or not v:
             raise ValueError('实时负荷数据不能为空')
-        # 检查数据格式
-        required_fields = {'timestamp', 'load'}
-        if not all(field in v for field in required_fields):
-            raise ValueError('负荷数据必须包含 timestamp 和 load 字段')
-        return v
-
-    @field_validator('real_his_meteo')
-    @classmethod
-    def validate_meteo_data(cls, v):
-        if not isinstance(v, dict) or not v:
-            raise ValueError('实时气象数据不能为空')
-        # 检查必需的气象要素
-        required_fields = {
-            'timestamp', 'relative_humidity_2m', 'surface_pressure',
-            'precipitation', 'wind_speed_10m', 'temperature_2m'
-        }
-        if not all(field in v for field in required_fields):
-            raise ValueError(f'气象数据缺少必需字段: {required_fields}')
         return v
 
 class ForecastRequest(BaseModel):

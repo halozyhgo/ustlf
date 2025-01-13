@@ -50,6 +50,7 @@ class ML_Model:
         然后记录一条信息，指示模型已成功保存。
         """
         if not os.path.exists(self.model_path):
+            print('测试一下是否创建文件')
             os.mkdir(self.model_path)
 
         save_dir = self.model_path+'/'+self.model_name+'.pkl'
