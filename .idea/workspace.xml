@@ -252,6 +252,7 @@
       <workItem from="1736813989402" duration="28003000" />
       <workItem from="1736918284049" duration="15296000" />
       <workItem from="1736989845189" duration="5878000" />
+      <workItem from="1736995787174" duration="670000" />
     </task>
     <task id="LOCAL-00001" summary="初次配置后的项目v1">
       <option name="closed" value="true" />
@@ -373,15 +374,57 @@
       <option name="project" value="LOCAL" />
       <updated>1736989919223</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="预测结果接口完成开发">
+      <option name="closed" value="true" />
+      <created>1736995823029</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1736995823029</updated>
+    </task>
+    <task id="LOCAL-00017" summary="预测结果接口完成开发">
+      <option name="closed" value="true" />
+      <created>1736995981481</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1736995981481</updated>
+    </task>
+    <task id="LOCAL-00018" summary="预测结果接口完成开发">
+      <option name="closed" value="true" />
+      <created>1736996052639</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1736996052639</updated>
+    </task>
+    <task id="LOCAL-00019" summary="预测结果接口完成开发">
+      <option name="closed" value="true" />
+      <created>1736996099210</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1736996099210</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="85b20f58-3a57-43ac-8103-bae99bcdc92e" value="TOOL_WINDOW" />
+      </map>
+    </option>
     <option name="TAB_STATES">
       <map>
+        <entry key="85b20f58-3a57-43ac-8103-bae99bcdc92e">
+          <value>
+            <State />
+          </value>
+        </entry>
         <entry key="MAIN">
           <value>
             <State />
@@ -403,7 +446,8 @@
     <MESSAGE value="实时数据上传接口修改前版本" />
     <MESSAGE value="预测气象拉取成功" />
     <MESSAGE value="实时数据上传修改后的版本，暂时完成该接口" />
-    <option name="LAST_COMMIT_MESSAGE" value="实时数据上传修改后的版本，暂时完成该接口" />
+    <MESSAGE value="预测结果接口完成开发" />
+    <option name="LAST_COMMIT_MESSAGE" value="预测结果接口完成开发" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
