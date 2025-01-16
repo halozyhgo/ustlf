@@ -381,6 +381,20 @@ def feature_search():
 @app.route('/ustlf/station/hp_search', methods=['POST'])
 def hyperparameter_search():
     """超参数搜索接口"""
+    '''
+    0、建立数据库连接（参考其他接口中的连接方式）
+    1、从数据库中获取历史负荷数据
+    2、从数据库中获取历史气象数据（1~2可以参考模型训练接口代码 train_model方法）
+    3、获取基础的输入特征（范围比较大）
+    4、获取基础的超参数组合区间（根据yaml的基础配置来生成超参数搜索的空间）
+    5、对数据集分割，一部分做训练一部分用于对特征和超参数组合做验证
+    6、得到最好的参数组合与特征组合，并将其保存到表ustlf_model_feature_hp_info中
+    7、将模型保存到起来（保存的方式也可参考模型训练接口代码 train_model方法）
+    
+    '''
+
+
+
     try:
         data = request.get_json()
         hp_req = HyperParamSearchRequest(**data)
