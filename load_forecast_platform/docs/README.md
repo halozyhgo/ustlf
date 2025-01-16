@@ -7,3 +7,9 @@
 - [超短期负荷预测详细设计方案](超短期负荷预测详细设计方案-初稿.pdf)
 - [表设计文档](表设计方案.pdf)
 ## 项目结构 
+
+
+
+## pycharm 激活方式
+https://www.yuque.com/strive-rd6n1/mpd5f0/nfku2mce8e6sfyee
+

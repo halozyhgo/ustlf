@@ -70,6 +70,7 @@ class ML_Model:
             模型，具体取决于load函数的行为和model_path中的内容。
         """
         save_dir = self.model_path+'/'+self.model_name+'.pkl'
+        self.model = load(save_dir)
         return load(save_dir)
 
 

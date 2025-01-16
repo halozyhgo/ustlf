@@ -149,7 +149,7 @@ class CommonResponse(BaseModel):
     """通用响应模型"""
     code: str = Field(..., description="状态码")
     msg: str = Field(..., description="返回信息")
-    data: Optional[Dict[str, Any]] = Field(None, description="返回数据")
+    data: dict = Field(None, description="返回数据")
 
     @field_validator('code')
     @classmethod

@@ -24,6 +24,48 @@ class FeatureEngineer:
             'wind_speed_10m', 'temperature_2m', 'shortwave_radiation'
         ]
 
+    def extract_pred_features(self, load_df, meteo_df, h=0.25):
+        """
+        提取特征
+        Args:
+            load_df: 负荷数据DataFrame
+            h: 距离预测点时长(小时)
+        Returns:
+            特征DataFrame和特征名列表
+        """
+        try:
+            load_df.set_index(pd.to_datetime(load_df['load_time']), inplace=True)
+            meteo_df.set_index(pd.to_datetime(meteo_df['meteo_times']), inplace=True)
+
+            df = pd.merge(load_df, meteo_df, left_index=True, right_index=True, how='outer')
+
+            to_numeric_list = ['load_data']
+            # todo: 将数值的列转化成数值型
+            df[to_numeric_list] = df[to_numeric_list].apply(pd.to_numeric, errors='coerce')
+            # 1. 时间特征
+            df = self._extract_time_features(df)
+
+            # 2. 负荷特征
+            df, add_fea_res = self._extract_load_features(df, h)
+
+            # 3. 气象特征[预测阶段直接复用气象数据]
+            for feature in self.weather_features:
+                df[f'future_{feature}'] = df[feature]
+            # 获取所有特征列名
+            feature_columns = (
+                    self.time_features +
+                    self._get_load_feature_names(h) +
+                    self._get_weather_feature_names() +
+                    add_fea_res
+            )
+
+            logger.info(f"特征工程完成，共生成 {len(feature_columns)} 个特征")
+            return df, feature_columns
+
+        except Exception as e:
+            logger.error(f"特征工程失败: {str(e)}")
+            raise
+
     def extract_features(self, load_df, meteo_df, h=0.25):
         """
         提取特征
@@ -61,7 +103,7 @@ class FeatureEngineer:
                 self._get_weather_feature_names()+
                 add_fea_res
             )
-            
+            df[['']]
             logger.info(f"特征工程完成，共生成 {len(feature_columns)} 个特征")
             return df, feature_columns
             
