@@ -103,7 +103,7 @@ class FeatureEngineer:
                 self._get_weather_feature_names()+
                 add_fea_res
             )
-            df[['']]
+            # df[['']]
             logger.info(f"特征工程完成，共生成 {len(feature_columns)} 个特征")
             return df, feature_columns
             

@@ -49,14 +49,14 @@ class RealTimeDataUploadRequest(BaseModel):
 class ForecastRequest(BaseModel):
     """预测结果请求模型"""
     site_id: str = Field(..., description="电站id")
-    begin_time: str = Field(..., description="预测开始时间")
+    forcast_time_start: str = Field(..., description="预测开始时间")
 
-    @field_validator('begin_time')
+    @field_validator('forcast_time_start')
     @classmethod
-    def validate_begin_time(cls, v):
+    def validate_forcast_time_start(cls, v):
         try:
             # 验证时间格式 HH:MM
-            t = datetime.strptime(v, "%H:%M").time()
+            t = datetime.strptime(v, "%Y-%m-%d %H:%M").time()
             # 检查是否为15分钟的整数倍
             if t.minute % 15 != 0:
                 raise ValueError('开始时间必须是15分钟的整数倍')

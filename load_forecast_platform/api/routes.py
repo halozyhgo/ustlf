@@ -241,9 +241,10 @@ def upload_real_time_data():
             if feature_info_table:
                 input_features = feature_info_table
             input_feature = list(set(input_features))
+            input_feature.sort()
             input_data = df_i.loc[pred_time.strftime('%Y-%m-%d %H:%M:%S')][input_feature]
             pred_i = lgb_model.model_predict([input_data])
-            mydict[pred_time.strftime('%Y-%m-%d %H:%M:%S')] = float(pred_i)
+            mydict[pred_time.strftime('%Y-%m-%d %H:%M:%S')] = round(float(pred_i),2)
 
         # 4、将预测结果存入数据库中
         res = {'site_id': upload_data.site_id, 'meteo_id': 1, 'cal_time': datetime.now(),
@@ -252,7 +253,7 @@ def upload_real_time_data():
         db.insert(table='ustlf_pred_res', df=pred_df)
         return jsonify(CommonResponse(
             code="200",
-            msg="实时数据上传成功,预测结果返回-------",
+            msg="实时数据上传成功,预测结果返回",
             data=mydict
         ).model_dump())
 
@@ -289,7 +290,7 @@ def get_forecast_result():
         if red_df.empty:
             return jsonify(CommonResponse(
                 code="401",
-                msg=f"参数验证失败: {str(e)}"
+                msg=f"参数验证失败"
             ).model_dump())
         else:
             return jsonify(CommonResponse(
@@ -607,6 +608,7 @@ def train_model():
             input_feature = feature_info_table
 
         input_feature = list(set(input_feature))
+        input_feature.sort()
         # todo: 对list中的每个数据集进行训练，保存模型以电站id为目录名，i表示预测的未来第几个负荷值的模型
         for i,df in enumerate(df_list):
             df = df[:-96]

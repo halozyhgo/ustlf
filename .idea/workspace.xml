@@ -4,16 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="预测气象拉取成功">
-      <change afterPath="$PROJECT_DIR$/load_forecast_platform/tests/time_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/schemas.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/docs/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/docs/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/models/lightgbm_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/models/lightgbm_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/tests/self_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/tests/self_test.py" afterDir="false" />
-    </list>
+    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="预测结果接口完成开发" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -67,35 +58,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Flask server.Flask (load_forecast_platform/api/__init__.py).executor": "Debug",
-    "Python tests.Python tests for test_config.test_config_load_default.executor": "Run",
-    "Python tests.Python tests for test_config.test_model_params.executor": "Run",
-    "Python.app.executor": "Run",
-    "Python.config.executor": "Debug",
-    "Python.init_db.executor": "Run",
-    "Python.routes.executor": "Debug",
-    "Python.self_test.executor": "Debug",
-    "Python.time_test.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "D:/CodeData/大地量子气象-各个电站负荷预测准确率验证all_in_one",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Flask server.Flask (load_forecast_platform/api/__init__.py).executor&quot;: &quot;Debug&quot;,
+    &quot;Python tests.Python tests for test_config.test_config_load_default.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_config.test_model_params.executor&quot;: &quot;Run&quot;,
+    &quot;Python.app.executor&quot;: &quot;Run&quot;,
+    &quot;Python.config.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.init_db.executor&quot;: &quot;Run&quot;,
+    &quot;Python.routes.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.self_test.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.time_test.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/CodeData/大地量子气象-各个电站负荷预测准确率验证all_in_one&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\CodeData\USLF_pro\load_forecast_platform\utils" />
@@ -260,6 +251,7 @@
       <workItem from="1736730390482" duration="16035000" />
       <workItem from="1736813989402" duration="28003000" />
       <workItem from="1736918284049" duration="15296000" />
+      <workItem from="1736989845189" duration="5878000" />
     </task>
     <task id="LOCAL-00001" summary="初次配置后的项目v1">
       <option name="closed" value="true" />
@@ -373,7 +365,15 @@
       <option name="project" value="LOCAL" />
       <updated>1736762058614</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="实时数据上传修改后的版本，暂时完成该接口">
+      <option name="closed" value="true" />
+      <created>1736989919223</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1736989919223</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -402,7 +402,8 @@
     <MESSAGE value="模型训练接口完成" />
     <MESSAGE value="实时数据上传接口修改前版本" />
     <MESSAGE value="预测气象拉取成功" />
-    <option name="LAST_COMMIT_MESSAGE" value="预测气象拉取成功" />
+    <MESSAGE value="实时数据上传修改后的版本，暂时完成该接口" />
+    <option name="LAST_COMMIT_MESSAGE" value="实时数据上传修改后的版本，暂时完成该接口" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -449,17 +450,17 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>505</line>
+          <line>506</line>
           <option name="timeStamp" value="74" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>517</line>
+          <line>518</line>
           <option name="timeStamp" value="78" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>528</line>
+          <line>529</line>
           <option name="timeStamp" value="79" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -487,41 +488,6 @@
           <line>28</line>
           <option name="timeStamp" value="175" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py</url>
-          <line>107</line>
-          <option name="timeStamp" value="195" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py</url>
-          <line>106</line>
-          <option name="timeStamp" value="196" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py</url>
-          <line>81</line>
-          <option name="timeStamp" value="197" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py</url>
-          <line>82</line>
-          <option name="timeStamp" value="198" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py</url>
-          <line>84</line>
-          <option name="timeStamp" value="199" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py</url>
-          <line>86</line>
-          <option name="timeStamp" value="200" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/data_processor/feature_engineer.py</url>
-          <line>88</line>
-          <option name="timeStamp" value="201" />
-        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
@@ -533,6 +499,6 @@
     <SUITE FILE_PATH="coverage/USLF_pro$config.coverage" NAME="config Coverage Results" MODIFIED="1736316705308" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/utils" />
     <SUITE FILE_PATH="coverage/USLF_pro$time_test.coverage" NAME="time_test Coverage Results" MODIFIED="1736814360787" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/tests" />
     <SUITE FILE_PATH="coverage/USLF_pro$self_test.coverage" NAME="self_test Coverage Results" MODIFIED="1736818466990" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/tests" />
-    <SUITE FILE_PATH="coverage/USLF_pro$Flask__load_forecast_platform_api___init___py_.coverage" NAME="Flask (load_forecast_platform/api/__init__.py) Coverage Results" MODIFIED="1736920683939" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/USLF_pro$Flask__load_forecast_platform_api___init___py_.coverage" NAME="Flask (load_forecast_platform/api/__init__.py) Coverage Results" MODIFIED="1736994746666" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
