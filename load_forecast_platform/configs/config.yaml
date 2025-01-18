@@ -60,4 +60,25 @@ feature_engineering:
 data_processing:
   threshold_loss: 0.5      # 数据丢失阈值
   threshold_abnormal: 0.5  # 异常值阈值
-  threshold_constant: 0.3  # 恒定斜率阈值 
+  threshold_constant: 0.3  # 恒定斜率阈值
+
+base_features:
+  ['future_precipitation',
+ 'future_relative_humidity_2m',
+ 'future_shortwave_radiation',
+ 'future_surface_pressure',
+ 'future_temperature_2m',
+ 'future_wind_speed_10m',
+ 'holiday',
+ 'hour',
+ 'past_1_value',
+ 'past_2_value',
+ 'past_3_value',
+ 'past_4_value',
+ 'past_5_value',
+ 'past_6_value',
+ 'past_7_value',
+ 'past_8_value',
+ 'period',
+ 'last_96_load'
+]

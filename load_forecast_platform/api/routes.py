@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+import itertools
+
+import tqdm
+from sklearn.model_selection import train_test_split, ParameterGrid
+from sklearn.metrics import mean_squared_error
 
 from flask import request, jsonify
-from loadFcst.utils import feature_engine
-from sympy.physics.units import years
 
 from load_forecast_platform.models.lightgbm_model import ML_Model
 from load_forecast_platform.api import app
@@ -377,80 +380,176 @@ def feature_search():
         ).model_dump())
 
 
-# 5. 超参数搜索接口
-@app.route('/ustlf/station/hp_search', methods=['POST'])
-def hyperparameter_search():
+# 5. 超参数&输入特征搜索搜索接口
+@app.route('/ustlf/station/hp_feature_search', methods=['POST'])
+def hyperparameter_feature_search():
     """超参数搜索接口"""
-    '''
-    0、建立数据库连接（参考其他接口中的连接方式）
-    1、从数据库中获取历史负荷数据
-    2、从数据库中获取历史气象数据（1~2可以参考模型训练接口代码 train_model方法）
-    3、获取基础的输入特征（范围比较大）
-    4、获取基础的超参数组合区间（根据yaml的基础配置来生成超参数搜索的空间）
-    5、对数据集分割，一部分做训练一部分用于对特征和超参数组合做验证
-    6、得到最好的参数组合与特征组合，并将其保存到表ustlf_model_feature_hp_info中
-    7、将模型保存到起来（保存的方式也可参考模型训练接口代码 train_model方法）
-    
-    '''
-
-
-
     try:
+        # 验证请求数据
         data = request.get_json()
         hp_req = HyperParamSearchRequest(**data)
 
-        db = DataBase(Config().database)
-        try:
-            with db.engine.begin() as conn:
-                # 1. 获取特征信息
-                feature_query = """
-                    SELECT feature_info
-                    FROM ustlf_model_feature_hp_info
-                    WHERE site_id = :site_id
-                """
-                feature_result = conn.execute(text(feature_query),
-                                              {'site_id': hp_req.site_id}).fetchone()
+        # 初始化配置和数据库连接
+        config = Config()
+        db = DataBase(**config.database)
 
-                if not feature_result:
-                    return jsonify(CommonResponse(
-                        code="401",
-                        msg="未找到特征信息，请先进行特征搜索"
-                    ).model_dump())
+        # 1. 获取历史负荷数据
+        load_query = """
+            SELECT load_time, load_data
+            FROM ustlf_station_history_load
+            WHERE site_id = '{}' AND load_time <= '{}'
+            ORDER BY load_time
+        """.format(hp_req.site_id, hp_req.end_date)
+        load_df = db.query(load_query)
 
-                # 2. 执行超参数搜索
-                from load_forecast_platform.trainer.param_optimizer import ParamOptimizer
-                optimizer = ParamOptimizer()
-                best_params = optimizer.search(feature_result[0])
+        # 2. 获取历史气象数据
+        meteo_query = """
+            SELECT meteo_times, relative_humidity_2m, surface_pressure,
+                   precipitation, wind_speed_10m, temperature_2m, shortwave_radiation
+            FROM ustlf_station_meteo_data
+            WHERE site_id = '{}' AND meteo_times<='{}'
+            ORDER BY meteo_times
+        """.format(hp_req.site_id, hp_req.end_date)
+        meteo_df = db.query(meteo_query)
 
-                # 3. 更新超参数信息
-                update_sql = """
-                    UPDATE ustlf_model_feature_hp_info
-                    SET hyperparams_info = :hyperparams_info
-                    WHERE site_id = :site_id
-                """
-                conn.execute(text(update_sql), {
-                    'site_id': hp_req.site_id,
-                    'hyperparams_info': str(best_params)
-                })
+        # 3. 特征工程处理
+        h=16
+        # processor = DataProcessor()
+        feature_engine = FeatureEngineer()
 
-                return jsonify(CommonResponse(
-                    code="200",
-                    msg="超参数搜索成功",
-                    data={"hyperparameters": best_params}
-                ).model_dump())
+        # 生成所有可能的特征组合
+        # config = Config()
+        best_features = config.config['base_features']
 
-        except Exception as e:
-            return jsonify(CommonResponse(
-                code="500",
-                msg=f"超参数搜索失败: {str(e)}"
-            ).model_dump())
-        finally:
-            db.close()
+        df,all_features = feature_engine.extract_features(load_df, meteo_df,h=h)
+        # all_features = list(base_features.columns)
+        # all_features.remove('load_data')
+        df = df[96*7:-96]
+
+        # 4. 生成超参数搜索空间
+
+        param_grid = {
+            'boosting_type':['gbdt','dart'],
+            'objective': ['rmse','mae'],
+            'n_jobs':[4],
+            'max_depth':[5,10,-1],
+            'subsample': [0.5, 0.7, 0.9],
+            'learning_rate': [0.01, 0.05, 0.1],
+            'min_child_samples':[10, 20, 30],
+            'n_estimators': [500, 1000, 1500],
+            'boost_from_average':[False,True],
+            'random_state':[42],
+            'verbosity':[-1]
+        }
+        # 5. 数据集分割
+        all_features = set(all_features)
+        all_features = list(all_features)
+        all_features.sort()
+        X = df[all_features]
+        y = df['load_data']
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, shuffle=False)
+
+        # 6. 特征和超参数联合搜索
+
+        # 限制搜索次数 如果超参数搜索次数连续超过max_search没有更好的模型就会停止搜索
+        max_search = 5
+        search_count = 0
+
+        # 基准params： 以往经验中得到的最好的超参数，如果超过50次没有对精度提升，则使用基准params
+        # best_params = config.config['model_params']['lightgbm']
+        best_params = {'boost_from_average': True, 'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_depth': 10, 'min_child_samples': 10, 'n_estimators': 1500, 'n_jobs': 4, 'objective': 'mae', 'random_state': 42, 'subsample': 0.5, 'verbosity': -1}
+        model = ML_Model(
+            model_name=f'site_{hp_req.site_id}_hp_search',
+            model_params=best_params,
+            model_path=f"./models_pkl/site_id_{hp_req.site_id}"
+        )
+        model.get_model()
+        model.model_train(X_train, y_train)
+        y_pred = model.model_predict(X_val)
+        best_score = mean_squared_error(y_val, y_pred)
+
+        for params in tqdm.tqdm(ParameterGrid(param_grid)):
+            if search_count >= max_search:
+                break
+            search_count += 1
+            # print(f"Search count: {search_count}")
+            # print(f"Current params: {params}")
+            model = ML_Model(
+                model_name=f'site_{hp_req.site_id}_hp_search',
+                model_params=params,
+                model_path=f"./models_pkl/site_id_{hp_req.site_id}"
+            )
+            model.get_model()
+            model.model_train(X_train, y_train)
+            y_pred = model.model_predict(X_val)
+            score = mean_squared_error(y_val, y_pred)
+            if score < best_score:
+                best_score = score
+                best_params = params
+                print('精度提升了')
+                print(f"Current params: {params}")
+                print(f"Current score: {score}")
+                print("*"*100)
+
+
+
+
+        print(f"Best score: {best_score}")
+        print(f"Best params: {best_params}")
+
+        best_score_feature_search = float('inf')
+        # 在基础输入特征的基础上对其余特征进行遍历，若遍历到的新特征对进度有提升，则纳入基础输入特征
+        for feature in tqdm.tqdm(all_features):
+            if feature in best_features:
+                continue
+            input_feature = best_features + [feature]
+            X_train_new = X_train[input_feature]
+            X_val_new = X_val[input_feature]
+            model = ML_Model(
+                model_name=f'site_{hp_req.site_id}_hp_search',
+                model_params=best_params,
+                model_path=f"./models_pkl/site_id_{hp_req.site_id}"
+            )
+            model.get_model()
+            model.model_train(X_train_new, y_train)
+            y_pred = model.model_predict(X_val_new)
+            score = mean_squared_error(y_val, y_pred)
+            if score < best_score_feature_search:
+                best_score_feature_search = score
+                best_features = input_feature
+                print("精度提升了")
+                print(f"Current score: {score}")
+                print(f"输入特征:{input_feature}")
+                print("*"*100)
+        # 如果搜了一圈还是没有全量特征的准确率高，那就继续沿用全量数据
+        if best_score_feature_search > best_score:
+            best_features=all_features
+
+        # 7. 保存最佳参数组合
+        insert_dict = {
+            'site_id': hp_req.site_id,
+            'feature_info': json.dumps({'best_feature':best_features}),
+            'hyperparams_info': json.dumps(best_params),
+            'update_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        df_insert = pd.DataFrame([insert_dict])
+
+        # replace_sql = '''
+        #         REPLACE into ustlf_model_feature_hp_info site_id {}
+        # '''
+
+        db.insert(df_insert, 'ustlf_model_feature_hp_info')
+        return jsonify(CommonResponse(
+            code="200",
+            msg="超参数搜索成功",
+            data={"best_params": best_params,
+                  "best_feature":best_features}
+        ).model_dump())
 
     except Exception as e:
         return jsonify(CommonResponse(
-            code="401",
-            msg=f"参数验证失败: {str(e)}"
+            code="500",
+            msg=f"超参数搜索失败: {str(e)}"
         ).model_dump())
 
 

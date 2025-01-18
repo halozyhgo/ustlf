@@ -129,7 +129,8 @@ def create_tables(db):
     create table if not exists ustlf_model_feature_hp_info (
         site_id varchar(50) primary key,              -- 电站id，主键
         feature_info text not null,            -- 输入特征信息
-        hyperparams_info text not null         -- 输入超参数信息
+        hyperparams_info text not null,         -- 输入超参数信息
+        update_time datetime not null           -- 更新时间
     );
     """
 
