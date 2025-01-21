@@ -526,19 +526,19 @@ def hyperparameter_feature_search():
             best_features=all_features
 
         # 7. 保存最佳参数组合
-        insert_dict = {
-            'site_id': hp_req.site_id,
-            'feature_info': json.dumps({'best_feature':best_features}),
-            'hyperparams_info': json.dumps(best_params),
-            'update_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        df_insert = pd.DataFrame([insert_dict])
 
-        # replace_sql = '''
-        #         REPLACE into ustlf_model_feature_hp_info site_id {}
-        # '''
+        # 转化成存入sql的格式
+        feature_info = '[ ' + ' , '.join(f'"{item}"' for item in best_features) + ' ]'
+        params = '{' + ', '.join(
+            f"''{key}'':{value}" if isinstance(value, int) else f"''{key}'':''{value}''" for key, value in
+            best_params.items()) + '}'
 
-        db.insert(df_insert, 'ustlf_model_feature_hp_info')
+        replace_sql = '''
+        REPLACE INTO ustlf_model_feature_hp_info (site_id, feature_info, hyperparams_info, update_time) VALUES 
+        ('{}', '{}', '{}', '{}');
+        '''.format(hp_req.site_id,feature_info,params,datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        db.execute(replace_sql)
+
         return jsonify(CommonResponse(
             code="200",
             msg="超参数搜索成功",
