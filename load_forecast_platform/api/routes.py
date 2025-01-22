@@ -141,6 +141,7 @@ def upload_real_time_data():
             5、存回数据库 [site_id,begin_time,res_data]
             6、返回结果
             '''
+    print('hello')
 
     try:
         # 验证请求数据
@@ -186,8 +187,8 @@ def upload_real_time_data():
         load_end_time = datetime.now()
 
         # 先以2024年9月2日做测试
-        # load_end_time = datetime.now().replace(year=2024,month=9,day=2,hour=7,minute=45)
-        load_end_time = new_data.index[-1]
+        load_end_time = datetime.now().replace(year=2024,month=9,day=2,hour=7,minute=45)
+        # load_end_time = new_data.index[-1]
         load_start_time = load_end_time-timedelta(days=9)
 
         load_start_time = load_start_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -268,6 +269,13 @@ def upload_real_time_data():
             msg=f"参数验证失败: {str(e)}"
         ).model_dump())
 
+# @api_bp.route('/station/hello_world', methods=['GET'])
+# def get_forecast_result():
+#     print('hello_world')
+#     jsonify(CommonResponse(
+#             code="401",
+#             msg=f"参数验证失败: {str(e)}"
+#         ).model_dump())
 
 # 3. 预测结果拉取接口
 @api_bp.route('/station/time_ustl_forcast_res', methods=['POST'])
@@ -381,6 +389,164 @@ def feature_search():
             msg=f"参数验证失败: {str(e)}"
         ).model_dump())
 
+def hyperparameter_feature_search_method(request_data):
+    hp_req = HyperParamSearchRequest(**request_data)
+
+    # 初始化配置和数据库连接
+    config = Config()
+    db = DataBase(**config.database)
+
+    # 1. 获取历史负荷数据
+    load_query = """
+                SELECT load_time, load_data
+                FROM ustlf_station_history_load
+                WHERE site_id = '{}' AND load_time <= '{}'
+                ORDER BY load_time
+            """.format(hp_req.site_id, hp_req.end_date)
+    load_df = db.query(load_query)
+
+    # 2. 获取历史气象数据
+    meteo_query = """
+                SELECT meteo_times, relative_humidity_2m, surface_pressure,
+                       precipitation, wind_speed_10m, temperature_2m, shortwave_radiation
+                FROM ustlf_station_meteo_data
+                WHERE site_id = '{}' AND meteo_times<='{}'
+                ORDER BY meteo_times
+            """.format(hp_req.site_id, hp_req.end_date)
+    meteo_df = db.query(meteo_query)
+
+    # 3. 特征工程处理
+    h = 16
+    # processor = DataProcessor()
+    feature_engine = FeatureEngineer()
+
+    # 生成所有可能的特征组合
+    # config = Config()
+    best_features = config.config['base_features']
+
+    df, all_features = feature_engine.extract_features(load_df, meteo_df, h=h)
+    # all_features = list(base_features.columns)
+    # all_features.remove('load_data')
+    df = df[96 * 7:-96]
+
+    # 4. 生成超参数搜索空间
+
+    param_grid = {
+        'boosting_type': ['gbdt', 'dart'],
+        'objective': ['rmse', 'mae'],
+        'n_jobs': [4],
+        'max_depth': [5, 10, -1],
+        'subsample': [0.5, 0.7, 0.9],
+        'learning_rate': [0.01, 0.05, 0.1],
+        'min_child_samples': [10, 20, 30],
+        'n_estimators': [500, 1000, 1500],
+        'boost_from_average': [False, True],
+        'random_state': [42],
+        'verbosity': [-1]
+    }
+    # 5. 数据集分割
+    all_features = set(all_features)
+    all_features = list(all_features)
+    all_features.sort()
+    X = df[all_features]
+    y = df['load_data']
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, shuffle=False)
+
+    # 6. 特征和超参数联合搜索
+
+    # 限制搜索次数 如果超参数搜索次数连续超过max_search没有更好的模型就会停止搜索
+    max_search = 5
+    search_count = 0
+
+    # 基准params： 以往经验中得到的最好的超参数，如果超过50次没有对精度提升，则使用基准params
+    # best_params = config.config['model_params']['lightgbm']
+    best_params = {'boost_from_average': True, 'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_depth': 10,
+                   'min_child_samples': 10, 'n_estimators': 1500, 'n_jobs': 4, 'objective': 'mae', 'random_state': 42,
+                   'subsample': 0.5, 'verbosity': -1}
+    model = ML_Model(
+        model_name=f'site_{hp_req.site_id}_hp_search',
+        model_params=best_params,
+        model_path=f"./models_pkl/site_id_{hp_req.site_id}"
+    )
+    model.get_model()
+    model.model_train(X_train, y_train)
+    y_pred = model.model_predict(X_val)
+    best_score = mean_squared_error(y_val, y_pred)
+
+    for params in tqdm.tqdm(ParameterGrid(param_grid)):
+        if search_count >= max_search:
+            break
+        search_count += 1
+        # print(f"Search count: {search_count}")
+        # print(f"Current params: {params}")
+        model = ML_Model(
+            model_name=f'site_{hp_req.site_id}_hp_search',
+            model_params=params,
+            model_path=f"./models_pkl/site_id_{hp_req.site_id}"
+        )
+        model.get_model()
+        model.model_train(X_train, y_train)
+        y_pred = model.model_predict(X_val)
+        score = mean_squared_error(y_val, y_pred)
+        if score < best_score:
+            best_score = score
+            best_params = params
+            print('精度提升了')
+            print(f"Current params: {params}")
+            print(f"Current score: {score}")
+            print("*" * 100)
+
+    print(f"Best score: {best_score}")
+    print(f"Best params: {best_params}")
+
+    best_score_feature_search = float('inf')
+    # 在基础输入特征的基础上对其余特征进行遍历，若遍历到的新特征对进度有提升，则纳入基础输入特征
+    for feature in tqdm.tqdm(all_features):
+        if feature in best_features:
+            continue
+        input_feature = best_features + [feature]
+        X_train_new = X_train[input_feature]
+        X_val_new = X_val[input_feature]
+        model = ML_Model(
+            model_name=f'site_{hp_req.site_id}_hp_search',
+            model_params=best_params,
+            model_path=f"./models_pkl/site_id_{hp_req.site_id}"
+        )
+        model.get_model()
+        model.model_train(X_train_new, y_train)
+        y_pred = model.model_predict(X_val_new)
+        score = mean_squared_error(y_val, y_pred)
+        if score < best_score_feature_search:
+            best_score_feature_search = score
+            best_features = input_feature
+            print("精度提升了")
+            print(f"Current score: {score}")
+            print(f"输入特征:{input_feature}")
+            print("*" * 100)
+    # 如果搜了一圈还是没有全量特征的准确率高，那就继续沿用全量数据
+    if best_score_feature_search > best_score:
+        best_features = all_features
+
+    # 7. 保存最佳参数组合
+
+    # 转化成存入sql的格式
+    feature_info = '[ ' + ' , '.join(f'"{item}"' for item in best_features) + ' ]'
+    params = '{' + ', '.join(
+        f"''{key}'':{value}" if isinstance(value, int) else f"''{key}'':''{value}''" for key, value in
+        best_params.items()) + '}'
+
+    replace_sql = '''
+            REPLACE INTO ustlf_model_feature_hp_info (site_id, feature_info, hyperparams_info, update_time) VALUES 
+            ('{}', '{}', '{}', '{}');
+            '''.format(hp_req.site_id, feature_info, params, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    db.execute(replace_sql)
+
+    return jsonify(CommonResponse(
+        code="200",
+        msg="超参数搜索成功",
+        data={"best_params": best_params,
+              "best_feature": best_features}
+    ).model_dump())
 
 # 5. 超参数&输入特征搜索搜索接口
 @api_bp.route('/station/hp_feature_search', methods=['POST'])
@@ -389,164 +555,8 @@ def hyperparameter_feature_search():
     try:
         # 验证请求数据
         data = request.get_json()
-        hp_req = HyperParamSearchRequest(**data)
-
-        # 初始化配置和数据库连接
-        config = Config()
-        db = DataBase(**config.database)
-
-        # 1. 获取历史负荷数据
-        load_query = """
-            SELECT load_time, load_data
-            FROM ustlf_station_history_load
-            WHERE site_id = '{}' AND load_time <= '{}'
-            ORDER BY load_time
-        """.format(hp_req.site_id, hp_req.end_date)
-        load_df = db.query(load_query)
-
-        # 2. 获取历史气象数据
-        meteo_query = """
-            SELECT meteo_times, relative_humidity_2m, surface_pressure,
-                   precipitation, wind_speed_10m, temperature_2m, shortwave_radiation
-            FROM ustlf_station_meteo_data
-            WHERE site_id = '{}' AND meteo_times<='{}'
-            ORDER BY meteo_times
-        """.format(hp_req.site_id, hp_req.end_date)
-        meteo_df = db.query(meteo_query)
-
-        # 3. 特征工程处理
-        h=16
-        # processor = DataProcessor()
-        feature_engine = FeatureEngineer()
-
-        # 生成所有可能的特征组合
-        # config = Config()
-        best_features = config.config['base_features']
-
-        df,all_features = feature_engine.extract_features(load_df, meteo_df,h=h)
-        # all_features = list(base_features.columns)
-        # all_features.remove('load_data')
-        df = df[96*7:-96]
-
-        # 4. 生成超参数搜索空间
-
-        param_grid = {
-            'boosting_type':['gbdt','dart'],
-            'objective': ['rmse','mae'],
-            'n_jobs':[4],
-            'max_depth':[5,10,-1],
-            'subsample': [0.5, 0.7, 0.9],
-            'learning_rate': [0.01, 0.05, 0.1],
-            'min_child_samples':[10, 20, 30],
-            'n_estimators': [500, 1000, 1500],
-            'boost_from_average':[False,True],
-            'random_state':[42],
-            'verbosity':[-1]
-        }
-        # 5. 数据集分割
-        all_features = set(all_features)
-        all_features = list(all_features)
-        all_features.sort()
-        X = df[all_features]
-        y = df['load_data']
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, shuffle=False)
-
-        # 6. 特征和超参数联合搜索
-
-        # 限制搜索次数 如果超参数搜索次数连续超过max_search没有更好的模型就会停止搜索
-        max_search = 5
-        search_count = 0
-
-        # 基准params： 以往经验中得到的最好的超参数，如果超过50次没有对精度提升，则使用基准params
-        # best_params = config.config['model_params']['lightgbm']
-        best_params = {'boost_from_average': True, 'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_depth': 10, 'min_child_samples': 10, 'n_estimators': 1500, 'n_jobs': 4, 'objective': 'mae', 'random_state': 42, 'subsample': 0.5, 'verbosity': -1}
-        model = ML_Model(
-            model_name=f'site_{hp_req.site_id}_hp_search',
-            model_params=best_params,
-            model_path=f"./models_pkl/site_id_{hp_req.site_id}"
-        )
-        model.get_model()
-        model.model_train(X_train, y_train)
-        y_pred = model.model_predict(X_val)
-        best_score = mean_squared_error(y_val, y_pred)
-
-        for params in tqdm.tqdm(ParameterGrid(param_grid)):
-            if search_count >= max_search:
-                break
-            search_count += 1
-            # print(f"Search count: {search_count}")
-            # print(f"Current params: {params}")
-            model = ML_Model(
-                model_name=f'site_{hp_req.site_id}_hp_search',
-                model_params=params,
-                model_path=f"./models_pkl/site_id_{hp_req.site_id}"
-            )
-            model.get_model()
-            model.model_train(X_train, y_train)
-            y_pred = model.model_predict(X_val)
-            score = mean_squared_error(y_val, y_pred)
-            if score < best_score:
-                best_score = score
-                best_params = params
-                print('精度提升了')
-                print(f"Current params: {params}")
-                print(f"Current score: {score}")
-                print("*"*100)
-
-
-
-
-        print(f"Best score: {best_score}")
-        print(f"Best params: {best_params}")
-
-        best_score_feature_search = float('inf')
-        # 在基础输入特征的基础上对其余特征进行遍历，若遍历到的新特征对进度有提升，则纳入基础输入特征
-        for feature in tqdm.tqdm(all_features):
-            if feature in best_features:
-                continue
-            input_feature = best_features + [feature]
-            X_train_new = X_train[input_feature]
-            X_val_new = X_val[input_feature]
-            model = ML_Model(
-                model_name=f'site_{hp_req.site_id}_hp_search',
-                model_params=best_params,
-                model_path=f"./models_pkl/site_id_{hp_req.site_id}"
-            )
-            model.get_model()
-            model.model_train(X_train_new, y_train)
-            y_pred = model.model_predict(X_val_new)
-            score = mean_squared_error(y_val, y_pred)
-            if score < best_score_feature_search:
-                best_score_feature_search = score
-                best_features = input_feature
-                print("精度提升了")
-                print(f"Current score: {score}")
-                print(f"输入特征:{input_feature}")
-                print("*"*100)
-        # 如果搜了一圈还是没有全量特征的准确率高，那就继续沿用全量数据
-        if best_score_feature_search > best_score:
-            best_features=all_features
-
-        # 7. 保存最佳参数组合
-
-        # 转化成存入sql的格式
-        feature_info = '[ ' + ' , '.join(f'"{item}"' for item in best_features) + ' ]'
-        params = '{' + ', '.join(
-            f"''{key}'':{value}" if isinstance(value, int) else f"''{key}'':''{value}''" for key, value in
-            best_params.items()) + '}'
-
-        replace_sql = '''
-        REPLACE INTO ustlf_model_feature_hp_info (site_id, feature_info, hyperparams_info, update_time) VALUES 
-        ('{}', '{}', '{}', '{}');
-        '''.format(hp_req.site_id,feature_info,params,datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        db.execute(replace_sql)
-
-        return jsonify(CommonResponse(
-            code="200",
-            msg="超参数搜索成功",
-            data={"best_params": best_params,
-                  "best_feature":best_features}
-        ).model_dump())
+        search_res = hyperparameter_feature_search_method(data)
+        return search_res
 
     except Exception as e:
         return jsonify(CommonResponse(
@@ -555,13 +565,9 @@ def hyperparameter_feature_search():
         ).model_dump())
 
 
-# 6. 历史气象拉取接口
-@api_bp.route('/station/get_history_meteo', methods=['POST'])
-def get_history_meteo():
-    """历史气象拉取接口"""
+def get_history_meteo_method(request_data):
     try:
-        data = request.get_json()
-        meteo_req = HistoryMeteoRequest(**data)
+        meteo_req = HistoryMeteoRequest(**request_data)
 
         # # 获取数据库连接
         logger.info("开始初始化数据库...")
@@ -582,7 +588,7 @@ def get_history_meteo():
 
         # 处理时间参数
         current_time = datetime.now()
-        end_time = current_time.replace(hour=19, minute=0, second=0, microsecond=0)
+        end_time = current_time.replace(hour=10, minute=45, second=0, microsecond=0)
         # 如果没有提供开始时间，使用默认值（当前日之前的3天）
         if not meteo_req.start_time:
             start_time = (end_time - timedelta(days=3)).strftime('%Y-%m-%d')
@@ -657,88 +663,107 @@ def get_history_meteo():
             msg=f"历史气象拉取成功"
         ).model_dump())
 
+# 6. 历史气象拉取接口
+@api_bp.route('/station/get_history_meteo', methods=['POST'])
+def get_history_meteo():
+    """历史气象拉取接口"""
+    request_data = request.get_json()
+    try:
+        res = get_history_meteo_method(request_data)
+        return res
+    except Exception as e:
+        return jsonify(CommonResponse(
+            code="401",
+            msg=f"参数验证失败: {str(e)}"
+        ).model_dump())
+
+def train_model_method(request_data):
+    train_req = ModelTrainRequest(**request_data)
+
+    config = Config()
+    model_param = config.config['model_params']['lightgbm']
+    # train_param = config['lightgbm_training']
+
+    db = DataBase(**config.database)
+    # 1、从表中获取模型超参数和输入特征
+    info_query = """SELECT feature_info, hyperparams_info
+                            FROM ustlf_model_feature_hp_info
+                            WHERE site_id = '{}'
+                            """.format(train_req.site_id)
+    res = db.query(info_query)
+    if len(res) == 0:
+        feature_info_table = None
+        hyperparams_info_table = None
+    else:
+        feature_info_table = res['feature_info']
+        hyperparams_info_table = res['hyperparams_info']
+    hyperparams = model_param
+    if hyperparams_info_table:
+        hyperparams = hyperparams_info_table
+
+    end_date = datetime.now().strftime('%Y-%m-%d')
+    if train_req.end_date:
+        end_date = train_req.end_date
+
+    # 2、从表中获取训练数据（）
+    # todo:获取历史负荷
+    load_query = """
+                                SELECT load_time, load_data
+                                FROM ustlf_station_history_load
+                                WHERE site_id = '{}' AND load_time<'{}'
+                                ORDER BY load_time
+                            """.format(train_req.site_id, end_date)
+    load_df = db.query(load_query)
+
+    # todo:获取气象负荷
+    meteo_query = """
+                                SELECT *
+                                FROM ustlf_station_meteo_data
+                                WHERE site_id = '{}' AND meteo_times <'{}'
+                                ORDER BY meteo_times
+                            """.format(train_req.site_id, end_date)
+    meteo_df = db.query(meteo_query)
+
+    # todo: 将气象数据与负荷数据结合，然后根据现在的特征组合，分类出输入特征和标签，
+    H_list = [i * 0.25 for i in range(1, 17)]
+    df_list = []
+    for H in H_list:
+        feature_engine = FeatureEngineer()
+        df_i, feature_columns = feature_engine.extract_features(load_df, meteo_df, h=H)
+        df_i_copy = df_i.copy()
+        df_list.append(df_i_copy)
+    input_feature = feature_columns
+    if feature_info_table:  # 如果取得模型输入参数，更改为从数据库中获取的模型
+        input_feature = feature_info_table
+
+    input_feature = list(set(input_feature))
+    input_feature.sort()
+    # todo: 对list中的每个数据集进行训练，保存模型以电站id为目录名，i表示预测的未来第几个负荷值的模型
+    for i, df in enumerate(df_list):
+        df = df[:-96]
+        X_train, Y_train = df[input_feature], df['load_data']
+        model_path = "./models_pkl/site_id_{}".format(train_req.site_id)
+        lgb_model = ML_Model(model_name='site_id_{}_model_{}'.format(train_req.site_id, i), model_params=hyperparams,
+                             model_path=model_path)
+        lgb_model.get_model()
+        lgb_model.model_train(X_train, Y_train)
+        lgb_model.save_model()
+
+    return jsonify(CommonResponse(
+        code="200",
+        msg="模型训练成功",
+        data={"model_path保存到文件中": model_path}
+    ).model_dump())
+
+
 # 7. 模型训练接口
 @api_bp.route('/station/model_train', methods=['POST'])
 def train_model():
     """模型训练接口"""
     try:
         data = request.get_json()
-        train_req = ModelTrainRequest(**data)
-
-        config = Config()
-        model_param = config.config['model_params']['lightgbm']
-        # train_param = config['lightgbm_training']
-
-        db = DataBase(**config.database)
-        # 1、从表中获取模型超参数和输入特征
-        info_query = """SELECT feature_info, hyperparams_info
-                        FROM ustlf_model_feature_hp_info
-                        WHERE site_id = '{}'
-                        """.format(train_req.site_id)
-        res = db.query(info_query)
-        if len(res)==0:
-            feature_info_table = None
-            hyperparams_info_table = None
-        else:
-            feature_info_table = res['feature_info']
-            hyperparams_info_table = res['hyperparams_info']
-        hyperparams = model_param
-        if hyperparams_info_table:
-            hyperparams = hyperparams_info_table
-
-        end_date = datetime.now().strftime('%Y-%m-%d')
-        if train_req.end_date:
-            end_date = train_req.end_date
-
-
-        # 2、从表中获取训练数据（）
-        # todo:获取历史负荷
-        load_query = """
-                            SELECT load_time, load_data
-                            FROM ustlf_station_history_load
-                            WHERE site_id = '{}' AND load_time<'{}'
-                            ORDER BY load_time
-                        """.format(train_req.site_id,end_date)
-        load_df = db.query(load_query)
-
-        # todo:获取气象负荷
-        meteo_query = """
-                            SELECT *
-                            FROM ustlf_station_meteo_data
-                            WHERE site_id = '{}' AND meteo_times <'{}'
-                            ORDER BY meteo_times
-                        """.format(train_req.site_id,end_date)
-        meteo_df = db.query(meteo_query)
-
-        # todo: 将气象数据与负荷数据结合，然后根据现在的特征组合，分类出输入特征和标签，
-        H_list = [i * 0.25 for i in range(1, 17)]
-        df_list = []
-        for H in H_list:
-            feature_engine = FeatureEngineer()
-            df_i,feature_columns = feature_engine.extract_features(load_df, meteo_df,h=H)
-            df_i_copy = df_i.copy()
-            df_list.append(df_i_copy)
-        input_feature = feature_columns
-        if feature_info_table:  # 如果取得模型输入参数，更改为从数据库中获取的模型
-            input_feature = feature_info_table
-
-        input_feature = list(set(input_feature))
-        input_feature.sort()
-        # todo: 对list中的每个数据集进行训练，保存模型以电站id为目录名，i表示预测的未来第几个负荷值的模型
-        for i,df in enumerate(df_list):
-            df = df[:-96]
-            X_train,Y_train = df[input_feature], df['load_data']
-            model_path = "./models_pkl/site_id_{}".format(train_req.site_id)
-            lgb_model = ML_Model(model_name='site_id_{}_model_{}'.format(train_req.site_id,i),model_params=hyperparams,model_path=model_path)
-            lgb_model.get_model()
-            lgb_model.model_train(X_train,Y_train)
-            lgb_model.save_model()
-
-        return jsonify(CommonResponse(
-            code="200",
-            msg="模型训练成功",
-            data={"model_path保存到文件中": model_path}
-        ).model_dump())
+        res = train_model_method(data)
+        return res
 
     except Exception as e:
         return jsonify(CommonResponse(
@@ -747,6 +772,78 @@ def train_model():
         ).model_dump())
 
 
+def get_forcast_meteo_method(request_data):
+    meteo_req = ForecastMeteoRequest(**request_data)
+    # # 获取数据库连接
+    logger.info("开始初始化数据库...")
+    config = Config()
+    # logger.info("配置加载成功")
+    # logger.info(f"数据库配置: {config.database}")
+    db = DataBase(**config.database)
+
+    sql_query = """
+                SELECT latitude, longitude
+                FROM ustlf_station_info
+                WHERE site_id = '{}'
+            """.format(meteo_req.site_id)
+
+    site_info = db.query(sql_query)
+    latitude = float(site_info['latitude'])
+    longitude = float(site_info['longitude'])
+
+    # 处理时间参数
+    current_time = datetime.now()
+
+    # 调用气象API
+    url = "http://8.212.49.208:5009/weather"
+    headers = {'apikey': 'renewable_api_key'}
+    params = {
+        'latitude': latitude,
+        'longitude': longitude,
+        'timezone': 'Asia/Shanghai',
+        'forecast_days': 4,
+        'interval': '15T',
+        'start_date': '2024-09-01',
+        'end_date': '2024-09-06',
+        'par': 'shortwave_radiation,temperature_2m,relative_humidity_2m,surface_pressure,precipitation,wind_speed_10m'
+    }
+
+    response = requests.get(url=url, params=params, headers=headers)
+    res = response.json()
+    data = res['par']
+
+    # 处理API返回数据
+    temperature = data['temperature_2m']
+    pressure = data['surface_pressure']
+    humidity = data['relative_humidity_2m']
+    irradiation = data['shortwave_radiation']
+    precipitation = data['precipitation']
+    wind_speed_10m = data['wind_speed_10m']
+    timestamp = data['time']
+
+    data_dict = {
+        'meteo_times': timestamp,
+        'temperature_2m': temperature,
+        'surface_pressure': pressure,
+        'relative_humidity_2m': humidity,
+        'shortwave_radiation': irradiation,
+        'wind_speed_10m': wind_speed_10m,
+        'precipitation': precipitation
+    }
+
+    # 创建DataFrame并添加站点信息
+    df = pd.DataFrame(data_dict)
+    df['site_id'] = meteo_req.site_id
+    df['meteo_id'] = meteo_req.meteo_id
+    df['update_time'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    # 存储到数据库
+
+    db.insert(table='ustlf_station_forecast_meteo_data', df=df)
+    return jsonify(CommonResponse(
+        code="200",
+        msg=f"预测气象拉取成功"
+    ).model_dump())
 
 # 8. 预测气象保存
 @api_bp.route('/station/get_forcast_meteo', methods=['POST'])
@@ -754,76 +851,7 @@ def get_forcast_meteo():
     """预测气象拉取接口"""
     try:
         data = request.get_json()
-        meteo_req = ForecastMeteoRequest(**data)
-
-        # # 获取数据库连接
-        logger.info("开始初始化数据库...")
-        config = Config()
-        logger.info("配置加载成功")
-        logger.info(f"数据库配置: {config.database}")
-        db = DataBase(**config.database)
-
-        sql_query = """
-            SELECT latitude, longitude
-            FROM ustlf_station_info
-            WHERE site_id = '{}'
-        """.format(meteo_req.site_id)
-
-        site_info = db.query(sql_query)
-        latitude = float(site_info['latitude'])
-        longitude = float(site_info['longitude'])
-
-        # 处理时间参数
-        current_time = datetime.now()
-
-        # 调用气象API
-        url = "http://8.212.49.208:5009/weather"
-        headers = {'apikey': 'renewable_api_key'}
-        params = {
-            'latitude': latitude,
-            'longitude': longitude,
-            'timezone': 'Asia/Shanghai',
-            'forecast_days': 4,
-            'interval': '15T',
-            'start_date': '2024-09-01',
-            'end_date': '2024-09-06',
-            'par': 'shortwave_radiation,temperature_2m,relative_humidity_2m,surface_pressure,precipitation,wind_speed_10m'
-        }
-
-        response = requests.get(url=url, params=params, headers=headers)
-        res = response.json()
-        data = res['par']
-
-        # 处理API返回数据
-        temperature = data['temperature_2m']
-        pressure = data['surface_pressure']
-        humidity = data['relative_humidity_2m']
-        irradiation = data['shortwave_radiation']
-        precipitation = data['precipitation']
-        wind_speed_10m = data['wind_speed_10m']
-        timestamp = data['time']
-
-        data_dict = {
-            'meteo_times':timestamp,
-            'temperature_2m': temperature,
-            'surface_pressure': pressure,
-            'relative_humidity_2m': humidity,
-            'shortwave_radiation': irradiation,
-            'wind_speed_10m': wind_speed_10m,
-            'precipitation': precipitation
-        }
-
-        # 创建DataFrame并添加站点信息
-        df = pd.DataFrame(data_dict)
-        df['site_id'] = meteo_req.site_id
-        df['meteo_id'] = meteo_req.meteo_id
-        df['update_time'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
-
-        # 存储到数据库
-
-        db.insert(table='ustlf_station_forecast_meteo_data',df=df)
-
-
+        get_forcast_meteo_method(data)
     except Exception as e:
         return jsonify(CommonResponse(
             code="401",
@@ -838,6 +866,34 @@ def get_forcast_meteo():
 
 
 # 9.获取电站列表的接口
+# @api_bp.route('/station/list', methods=['GET'])
+# def get_station_list():
+#     """获取电站列表接口"""
+#     try:
+#         config = Config()
+#         db = DataBase(**config.database)
+#
+#         query = "SELECT site_id FROM ustlf_station_info"
+#         sites = db.query(query)
+#
+#         if sites.empty:
+#             return jsonify(CommonResponse(
+#                 code="401",
+#                 msg="未找到任何电站"
+#             ).model_dump())
+#
+#         return jsonify(CommonResponse(
+#             code="200",
+#             msg="获取电站列表成功",
+#             data={"site_ids": sites['site_id'].tolist()}
+#         ).model_dump())
+#
+#     except Exception as e:
+#         return jsonify(CommonResponse(
+#             code="500",
+#             msg=f"获取电站列表失败: {str(e)}"
+#         ).model_dump())
+
 @api_bp.route('/station/list', methods=['GET'])
 def get_station_list():
     """获取电站列表接口"""
@@ -849,19 +905,36 @@ def get_station_list():
         sites = db.query(query)
 
         if sites.empty:
-            return jsonify(CommonResponse(
-                code="401",
-                msg="未找到任何电站"
-            ).model_dump())
+            return {
+                'code':"401",
+                'msg':"未找到任何电站"
+            }
 
-        return jsonify(CommonResponse(
-            code="200",
-            msg="获取电站列表成功",
-            data={"site_ids": sites['site_id'].tolist()}
-        ).model_dump())
+        return {
+            'code':"200",
+            'msg' : "获取电站列表成功",
+            'data' : sites['site_id'].tolist()
+        }
+
 
     except Exception as e:
-        return jsonify(CommonResponse(
-            code="500",
-            msg=f"获取电站列表失败: {str(e)}"
-        ).model_dump())
+
+        return {
+            'code': "500",
+            'msg': f"获取电站列表失败: {str(e)}"
+        }
+
+
+if __name__ == '__main__':
+    res = get_station_list()
+    print(res)
+    print(res['data'])
+
+
+
+    response = requests.get('http://127.0.0.1:5000/ustlf/station/list')
+    print(response)
+    stations = response.json()['data']
+    stations_count = len(stations)
+
+

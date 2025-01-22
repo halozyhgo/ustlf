@@ -1,11 +1,1 @@
-sqlalchemy
-pymysql
-pandas
-lightgbm
-flask
-pyyaml
-apscheduler
-loguru
-chinese_calendar
-gunicorn
-gevent 
+requests>=2.31.0

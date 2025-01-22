@@ -60,6 +60,42 @@ class DataBase(object):
         """查询并返回DataFrame"""
         df = pd.DataFrame(self.execute(sql))
         return df
+    # def insert(self, table, df):
+    #     """
+    #     将dataframe插入数据库
+    #     :param table: str, table name in database
+    #     :param df: pd.DataFrame()
+    #     :return: object or None
+    #     """
+    #     'check data'
+    #     if isinstance(df.index, pd.DatetimeIndex):
+    #         df = df.reset_index()
+    #     df = df.astype(object).where(df.notnull(), None)
+    #     df_cols, df_values = df.columns.tolist(), df.values.tolist()
+    #
+    #     'format data'
+    #     key, placeholder, duplicate_cond = '', '', 'ON DUPLICATE KEY UPDATE '
+    #     for i, col in enumerate(df_cols):
+    #         key += f'`{col}`' if i == (len(df_cols) - 1) else f'`{col}`, '
+    #         placeholder += '%s' if i == (len(df_cols) - 1) else f'%s, '
+    #         duplicate_cond += f'`{col}` = VALUES(`{col}`)' if i == (len(df_cols) - 1) else f'`{col}` = VALUES(`{col}`), '
+    #
+    #     '创建表时已设定unique key,用REPLACE INTO可以达成无数据则插入,有数据则更新'
+    #     res = None
+    #     try:
+    #         self.create_conn()
+    #         self._cursor.executemany(f"INSERT INTO {table} ({key}) VALUES({placeholder}) {duplicate_cond}", df_values)
+    #         self._conn.commit()
+    #         res = self._cursor.fetchall()
+    #         self.close_conn()
+    #     except:
+    #         logger.warning(traceback.print_exc())
+    #         # handle case that connection is alive
+    #         if self._conn.open:
+    #             self._conn.rollback()
+    #             self.close_conn()
+    #
+    #     return res
 
     def insert(self, table, df):
         """将DataFrame插入数据库"""
@@ -75,7 +111,7 @@ class DataBase(object):
         try:
             self.create_conn()
             self._cursor.executemany(
-                f"REPLACE INTO {table}({key}) VALUES({placeholder})", 
+                f"REPLACE INTO {table}({key}) VALUES({placeholder})",
                 df_values
             )
             self._conn.commit()

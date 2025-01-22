@@ -84,7 +84,7 @@ class HyperParamSearchRequest(BaseModel):
     """超参数搜索请求模型"""
     site_id: str = Field(..., description="电站id")
     end_date: Optional[str] = Field(None, description="搜索结束时间(默认为最新负荷数据的前一天)")
-    param_ranges: Optional[Dict[str, List[Any]]] = Field(None, description="超参数搜索范围")
+    # param_ranges: Optional[Dict[str, List[Any]]] = Field(None, description="超参数搜索范围")
 
     @field_validator('end_date')
     @classmethod
@@ -100,9 +100,9 @@ class HyperParamSearchRequest(BaseModel):
 class HistoryMeteoRequest(BaseModel):
     """历史气象拉取请求模型"""
     site_id: str = Field(..., description="电站id")
-    meteo_id: Optional[int] = Field(None, description="气象id(默认为研究院气象)")
-    # start_time: Optional[str] = Field(None, description="默认为日前3天")
-    # end_time: Optional[str] = Field(None, description="搜索结束时间(默认为当日19点)")
+    meteo_id: Optional[int] = Field('1', description="气象id(默认为研究院气象)")
+    start_time: Optional[str] = Field(None, description="默认为日前3天")
+    end_time: Optional[str] = Field(None, description="搜索结束时间(默认为当日19点)")
 
 class ForecastMeteoRequest(BaseModel):
     """历史气象拉取请求模型"""

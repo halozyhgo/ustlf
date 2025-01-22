@@ -37,7 +37,7 @@ def create_tables(db):
             create table if not exists ustlf_station_history_load (
             idx bigint auto_increment primary key,  -- 自增主键（BIGINT）
             site_id varchar(50) not null,                -- 电站id（不可为空）
-            load_time datetime not null unique, -- 负荷时间（不可为空，唯一）
+            load_time datetime not null, -- 负荷时间（不可为空，唯一）
             load_data decimal(10, 2) not null,   -- 负荷数值（不可为空）
             upload_time datetime not null,       -- 上传时间（不可为空）
             unique key (site_id, load_time) -- 联合唯一约束
