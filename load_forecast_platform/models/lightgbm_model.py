@@ -51,7 +51,8 @@ class ML_Model:
         """
         if not os.path.exists(self.model_path):
             print('测试一下是否创建文件')
-            os.mkdir(self.model_path)
+            # os.mkdir(self.model_path)
+            os.makedirs(self.model_path)
 
         save_dir = self.model_path+'/'+self.model_name+'.pkl'
         dump(self.model, save_dir)

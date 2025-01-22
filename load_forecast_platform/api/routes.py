@@ -832,3 +832,34 @@ def get_forcast_meteo():
             code="200",
             msg=f"预测气象拉取成功"
         ).model_dump())
+
+
+
+# 9.获取电站列表的接口
+@app.route('/ustlf/station/list', methods=['GET'])
+def get_station_list():
+    """获取电站列表接口"""
+    try:
+        config = Config()
+        db = DataBase(**config.database)
+
+        query = "SELECT site_id FROM ustlf_station_info"
+        sites = db.query(query)
+
+        if sites.empty:
+            return jsonify(CommonResponse(
+                code="401",
+                msg="未找到任何电站"
+            ).model_dump())
+
+        return jsonify(CommonResponse(
+            code="200",
+            msg="获取电站列表成功",
+            data={"site_ids": sites['site_id'].tolist()}
+        ).model_dump())
+
+    except Exception as e:
+        return jsonify(CommonResponse(
+            code="500",
+            msg=f"获取电站列表失败: {str(e)}"
+        ).model_dump())

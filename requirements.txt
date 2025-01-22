@@ -3,4 +3,9 @@ pymysql
 pandas
 lightgbm
 flask
-pyyaml 
+pyyaml
+apscheduler
+loguru
+chinese_calendar
+gunicorn
+gevent 
