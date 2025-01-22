@@ -1,27 +1,26 @@
 # -*- coding: utf-8 -*-
-from load_forecast_platform.api import app
-from load_forecast_platform.utils.scheduler import Scheduler
+from flask_apscheduler import APScheduler
 from load_forecast_platform.api.routes import get_history_meteo, hyperparameter_feature_search
+from load_forecast_platform.api import app
 
-def init_scheduler():
-    scheduler = Scheduler()
+def init_scheduler(app):
+    scheduler = APScheduler()
+    scheduler.init_app(app)
     
-    # 每日19点获取历史气象数据
-    scheduler.add_model_training_job(
-        get_history_meteo,
-        hour=19
-    )
+    # 每日19:10获取历史气象数据
+    @scheduler.task('cron', id='fetch_history_meteo', hour=19, minute=10)
+    def fetch_history_meteo_job():
+        get_history_meteo()
     
-    # 每日20点执行超参数和特征搜索
-    scheduler.add_model_training_job(
-        hyperparameter_feature_search,
-        hour=20
-    )
+    # 每月1日01:10执行超参数和特征搜索
+    @scheduler.task('cron', id='hyperparameter_search', day=1, hour=1, minute=10)
+    def hyperparameter_search_job():
+        hyperparameter_feature_search()
     
     scheduler.start()
 
 if __name__ == "__main__":
-    init_scheduler()
+    init_scheduler(app)
     from gevent import pywsgi
     app.debug = True
     server = pywsgi.WSGIServer(('0.0.0.0', 5000), app)

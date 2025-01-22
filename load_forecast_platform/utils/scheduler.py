@@ -31,7 +31,7 @@ class Scheduler:
         if job_id in self.jobs:
             self.remove_job(job_id)
 
-        trigger = CronTrigger(hour=hour)
+        trigger = CronTrigger(day=1,hour=hour)
         job = self.scheduler.add_job(
             func,
             trigger=trigger,
@@ -39,6 +39,21 @@ class Scheduler:
         )
         self.jobs[job_id] = job
         logger.info(f"模型训练任务已添加，将在每日{hour}点执行")
+
+    def add_meteo_fetch_job(self, func, hour=19):
+        """添加气象数据获取任务"""
+        job_id = 'meteo_fetch'
+        if job_id in self.jobs:
+            self.remove_job(job_id)
+
+        trigger = CronTrigger(hour=hour)
+        job = self.scheduler.add_job(
+            func,
+            trigger=trigger,
+            id=job_id
+        )
+        self.jobs[job_id] = job
+        logger.info(f"气象数据获取任务已添加，将在每日{hour}点执行")
 
     def remove_job(self, job_id):
         """移除定时任务"""

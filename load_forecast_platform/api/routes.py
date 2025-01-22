@@ -7,10 +7,12 @@ import tqdm
 from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.metrics import mean_squared_error
 
-from flask import request, jsonify
+from flask import Blueprint, request, jsonify
 
 from load_forecast_platform.models.lightgbm_model import ML_Model
-from load_forecast_platform.api import app
+
+# 创建蓝本
+api_bp = Blueprint('api', __name__)
 from load_forecast_platform.data_processor.feature_engineer import FeatureEngineer
 from load_forecast_platform.utils.database import DataBase
 from load_forecast_platform.utils.config import Config
@@ -32,7 +34,7 @@ import requests
 
 
 # 1. 电站注册接口
-@app.route('/ustlf/station/register', methods=['POST'])
+@api_bp.route('/station/register', methods=['POST'])
 def register_station():
     """电站注册接口"""
     try:
@@ -113,7 +115,7 @@ def register_station():
 
 
 # 2. 实时数据上传接口
-@app.route('/ustlf/station/real_time_data_upload', methods=['POST'])
+@api_bp.route('/station/real_time_data_upload', methods=['POST'])
 def upload_real_time_data():
     """实时数据上传接口"""
     '''
@@ -268,7 +270,7 @@ def upload_real_time_data():
 
 
 # 3. 预测结果拉取接口
-@app.route('/ustlf/station/time_ustl_forcast_res', methods=['POST'])
+@api_bp.route('/station/time_ustl_forcast_res', methods=['POST'])
 def get_forecast_result():
     """预测结果拉取接口"""
     try:
@@ -310,7 +312,7 @@ def get_forecast_result():
 
 
 # 4. 输入特征搜索接口
-@app.route('/ustlf/station/feature_search', methods=['POST'])
+@api_bp.route('/station/feature_search', methods=['POST'])
 def feature_search():
     """输入特征搜索接口"""
     try:
@@ -381,7 +383,7 @@ def feature_search():
 
 
 # 5. 超参数&输入特征搜索搜索接口
-@app.route('/ustlf/station/hp_feature_search', methods=['POST'])
+@api_bp.route('/station/hp_feature_search', methods=['POST'])
 def hyperparameter_feature_search():
     """超参数搜索接口"""
     try:
@@ -554,7 +556,7 @@ def hyperparameter_feature_search():
 
 
 # 6. 历史气象拉取接口
-@app.route('/ustlf/station/get_history_meteo', methods=['POST'])
+@api_bp.route('/station/get_history_meteo', methods=['POST'])
 def get_history_meteo():
     """历史气象拉取接口"""
     try:
@@ -656,7 +658,7 @@ def get_history_meteo():
         ).model_dump())
 
 # 7. 模型训练接口
-@app.route('/ustlf/station/model_train', methods=['POST'])
+@api_bp.route('/station/model_train', methods=['POST'])
 def train_model():
     """模型训练接口"""
     try:
@@ -747,7 +749,7 @@ def train_model():
 
 
 # 8. 预测气象保存
-@app.route('/ustlf/station/get_forcast_meteo', methods=['POST'])
+@api_bp.route('/station/get_forcast_meteo', methods=['POST'])
 def get_forcast_meteo():
     """预测气象拉取接口"""
     try:
@@ -836,7 +838,7 @@ def get_forcast_meteo():
 
 
 # 9.获取电站列表的接口
-@app.route('/ustlf/station/list', methods=['GET'])
+@api_bp.route('/station/list', methods=['GET'])
 def get_station_list():
     """获取电站列表接口"""
     try:

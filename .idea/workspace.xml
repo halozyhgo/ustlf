@@ -4,15 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="多并发完成响应">
-      <change afterPath="$PROJECT_DIR$/load_forecast_platform/api/run_api.py" afterDir="false" />
+    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="定时任务之前的代码">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/models/lightgbm_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/models/lightgbm_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/load_forecast_platform/scripts/run_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/scripts/run_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_forecast_platform/utils/scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/utils/scheduler.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,40 +64,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Flask server.Flask (load_forecast_platform/api/__init__.py).executor&quot;: &quot;Run&quot;,
-    &quot;Flask server.Flask (load_forecast_platform/api/run_api.py).executor&quot;: &quot;Debug&quot;,
-    &quot;Python tests.Python tests for test_config.test_config_load_default.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for test_config.test_model_params.executor&quot;: &quot;Run&quot;,
-    &quot;Python.app.executor&quot;: &quot;Run&quot;,
-    &quot;Python.config.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.init_db.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.model_trainer.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.routes.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.run.executor&quot;: &quot;Run&quot;,
-    &quot;Python.run_api (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.run_api.executor&quot;: &quot;Run&quot;,
-    &quot;Python.self_test.executor&quot;: &quot;Run&quot;,
-    &quot;Python.time_test.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/CodeData/大地量子气象-各个电站负荷预测准确率验证all_in_one&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;Code Search&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Flask server.Flask (load_forecast_platform/api/__init__.py).executor": "Debug",
+    "Flask server.Flask (load_forecast_platform/api/run_api.py).executor": "Debug",
+    "Python tests.Python tests for test_config.test_config_load_default.executor": "Run",
+    "Python tests.Python tests for test_config.test_model_params.executor": "Run",
+    "Python.app.executor": "Run",
+    "Python.config.executor": "Debug",
+    "Python.init_db.executor": "Debug",
+    "Python.model_trainer.executor": "Debug",
+    "Python.routes.executor": "Debug",
+    "Python.run.executor": "Run",
+    "Python.run_api (1).executor": "Run",
+    "Python.run_api.executor": "Run",
+    "Python.self_test.executor": "Run",
+    "Python.time_test.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "D:/CodeData/大地量子气象-各个电站负荷预测准确率验证all_in_one",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "Code Search",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\CodeData\USLF_pro\load_forecast_platform\api" />
@@ -276,6 +273,7 @@
       <workItem from="1737159961556" duration="11653000" />
       <workItem from="1737332790726" duration="8585000" />
       <workItem from="1737420905234" duration="29113000" />
+      <workItem from="1737510647728" duration="1405000" />
     </task>
     <task id="LOCAL-00001" summary="初次配置后的项目v1">
       <option name="closed" value="true" />
@@ -477,7 +475,15 @@
       <option name="project" value="LOCAL" />
       <updated>1737444523435</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="定时任务之前的代码">
+      <option name="closed" value="true" />
+      <created>1737511050114</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1737511050114</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -521,7 +527,8 @@
     <MESSAGE value="搜索接口开始搜索编写之前" />
     <MESSAGE value="搜索接口完成" />
     <MESSAGE value="多并发完成响应" />
-    <option name="LAST_COMMIT_MESSAGE" value="多并发完成响应" />
+    <MESSAGE value="定时任务之前的代码" />
+    <option name="LAST_COMMIT_MESSAGE" value="定时任务之前的代码" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -548,7 +555,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>46</line>
+          <line>48</line>
           <option name="timeStamp" value="140" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
