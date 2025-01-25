@@ -87,6 +87,9 @@ def register_station():
         meteo_df['meteo_times'] = meteo_df.index
         # meteo_df['winds']
 
+
+
+
         # 存储数据
         try:
             logger.info("开始初始化数据库...")
