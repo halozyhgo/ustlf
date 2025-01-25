@@ -97,7 +97,14 @@ def register_station():
             db = DataBase(**config.database)
             db.insert(table='ustlf_station_info', df=station_info_df)
             db.insert(table='ustlf_station_history_load', df=processed_load)
-            db.insert(table='ustlf_station_meteo_data', df=processed_meteo)
+            meteo_request_dict={
+                'site_id': station_data.site_id,
+                'start_time':processed_load.index[0].to_pydatetime().strftime('%Y-%m-%d'),
+                'end_time':processed_load.index[-1].to_pydatetime().strftime('%Y-%m-%d'),
+            }
+            get_history_meteo_method(meteo_request_dict)
+
+            # db.insert(table='ustlf_station_meteo_data', df=processed_meteo)
 
         except Exception as e:
             logger.error(f"程序执行失败: {str(e)}")

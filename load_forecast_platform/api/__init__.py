@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Flask
 from load_forecast_platform.utils.scheduler import Scheduler
-from .routes import get_history_meteo_method
+# from .routes import get_history_meteo_method
 
 def create_app():
     app = Flask(__name__)
