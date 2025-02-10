@@ -3,6 +3,19 @@ from flask import Flask
 from load_forecast_platform.utils.scheduler import Scheduler
 # from .routes import get_history_meteo_method
 
+from loguru import logger
+logger.add(
+    "logs/app.log",
+    rotation="1 day",
+    retention="90 days",
+    level="INFO",
+    format="{time} {level} {message}",
+    enqueue=True,
+    colorize=True,
+    backtrace=True,
+    diagnose=True,
+)
+
 def create_app():
     app = Flask(__name__)
     

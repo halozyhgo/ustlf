@@ -25,10 +25,11 @@ def create_tables(db):
             rated_capacity decimal(10, 2),       -- 额定容量（可为空）
             rated_power decimal(10, 2),          -- 额定功率（可为空）
             rated_power_pv decimal(10, 2),       -- 额定光伏发电功率（可为空）
-            frequency_load int,                  -- 负荷数据时间分辨率（可为空）
-            frequency_meteo int,                 -- 气象数据时间分辨率（可为空）
+            rated_transform_power decimal(10, 2),-- 变压器额定容量（不可为空）
             first_load_time datetime not null,   -- 负荷开始时间（不可为空）
-            upload_time datetime not null        -- 电站注册时间（不可为空）
+            upload_time datetime not null,       -- 电站注册时间（不可为空）
+            init_success TINYINT(1) DEFAULT 0,   -- 历史负荷长度是否足够3个月
+            trained TINYINT(1) DEFAULT 0         -- 是否已经有训练模型
         );
         """
 
@@ -117,10 +118,10 @@ def create_tables(db):
     # 创建日志信息表
     log_info_table = """
     create table if not exists ustlf_log_info (
-        log_id int auto_increment primary key,  -- 记录id，主键，自增长
-        site_id varchar(50) not null,                   -- 电站id
-        info text not null,                     -- 日志信息
-        upload_time datetime not null                  -- 日志录入时间
+        log_id bigint auto_increment primary key,       -- 记录id，主键，自增长
+        level varchar(20) not null,                     -- 日志级别
+        info text not null,                             -- 日志信息
+        upload_time datetime not null                   -- 日志录入时间
     );
     """
 
@@ -133,6 +134,7 @@ def create_tables(db):
         update_time datetime not null           -- 更新时间
     );
     """
+
 
     try:
         # 测试数据库连接
