@@ -2,6 +2,7 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Dict, Any, List
 from datetime import datetime, time
+from loguru import logger
 
 class StationRegisterRequest(BaseModel):
     """电站注册请求模型"""
@@ -13,11 +14,9 @@ class StationRegisterRequest(BaseModel):
     rated_capacity: float = Field(..., description="额定容量")
     rated_power: float = Field(..., description="额定功率")
     rated_power_pv: Optional[float] = Field(None, description="额定光伏发电功率")
-    frequency_load: int = Field(..., description="负荷数据时间分辨率")
-    frequency_meteo: int = Field(..., description="气象数据分辨率")
-    # first_load_time: str = Field(..., description="负荷开始时间")
+    rated_transform_power: Optional[float] = Field(None, description="变压器额定容量")
+    first_load_time: str = Field(..., description="负荷开始时间")
     his_load: list[Any] = Field(..., description="历史负荷数据")
-    his_meteo: list[Any] = Field(..., description="历史气象数据")
 
     @field_validator('longitude')
     @classmethod
@@ -33,17 +32,33 @@ class StationRegisterRequest(BaseModel):
             raise ValueError('纬度必须在-90到90之间')
         return v
 
+class LoadDataItem(BaseModel):
+    load_time: str  # 时间字符串
+    load_data: float  # 负荷值
+
+    # 自定义验证load_time格式
+    @field_validator("load_time")
+    @classmethod
+    def validate_load_time(cls, v):
+        try:
+            # 检查是否符合指定格式
+            datetime.strptime(v, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            raise ValueError("load_time格式必须为YYYY-MM-DD HH:MM:SS")
+        return v
+
+# 主请求模型
 class RealTimeDataUploadRequest(BaseModel):
     """实时数据上传请求模型"""
-    site_id: str = Field(..., description="电站id")
-    real_his_load: List[Any] = Field(..., description="实时负荷数据")
-    # real_his_meteo: Dict[str, Any] = Field(..., description="实时气象数据")
+    site_id: str = Field(..., min_length=1, description="电站id")
+    real_his_load: List[LoadDataItem] = Field(..., min_length=1, description="实时负荷数据")
 
-    @field_validator('real_his_load')
+    # 保留非空验证（可选，min_length=1已部分覆盖）
+    @field_validator("real_his_load")
     @classmethod
     def validate_load_data(cls, v):
-        if not isinstance(v, list) or not v:
-            raise ValueError('实时负荷数据不能为空')
+        if not v:
+            raise ValueError("实时负荷数据不能为空")
         return v
 
 class ForecastRequest(BaseModel):

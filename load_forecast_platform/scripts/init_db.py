@@ -17,7 +17,7 @@ def create_tables(db):
     station_info_table = """
             create table if not exists ustlf_station_info (
             idx bigint auto_increment primary key,  -- 自增主键（BIGINT）
-            site_id varchar(50) not null unique,         -- 电站id（不可为空，唯一）
+            site_id varchar(50) not null unique,    -- 电站id（不可为空，唯一）
             site_name varchar(255) not null,     -- 电站名称（不可为空）
             longitude decimal(10, 6) not null,   -- 经度（不可为空）
             latitude decimal(10, 6) not null,    -- 纬度（不可为空）
