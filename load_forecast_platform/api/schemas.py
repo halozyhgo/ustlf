@@ -58,6 +58,7 @@ class RealTimeDataUploadRequest(BaseModel):
     @classmethod
     def validate_load_data(cls, v):
         if not v:
+            logger.error(f"电站实时负荷数据不能为空")
             raise ValueError("实时负荷数据不能为空")
         return v
 
@@ -123,6 +124,8 @@ class ForecastMeteoRequest(BaseModel):
     """历史气象拉取请求模型"""
     site_id: str = Field(..., description="电站id")
     meteo_id: Optional[int] = Field(1, description="气象id(默认为研究院气象)")
+    start_time: Optional[str] = Field(None, description="默认为当日19点")
+    end_time: Optional[str] = Field(None, description="搜索结束时间(默认为当日19点)")
 
     @field_validator('meteo_id')
     @classmethod

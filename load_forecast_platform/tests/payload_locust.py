@@ -15,7 +15,7 @@ class VppUser(HttpUser):
     def payload(self):
         url = "/ustlf/station/real_time_data_upload"
         data = {
-    "site_id": "123",
+    "site_id": "12345",
 
     "real_his_load":[
         {

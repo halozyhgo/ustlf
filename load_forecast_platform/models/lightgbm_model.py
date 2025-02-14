@@ -50,7 +50,8 @@ class ML_Model:
         然后记录一条信息，指示模型已成功保存。
         """
         if not os.path.exists(self.model_path):
-            print('测试一下是否创建文件')
+            # print('测试一下是否创建文件')
+            logger.info(f'创建{self.model_path}模型文件夹')
             # os.mkdir(self.model_path)
             os.makedirs(self.model_path)
 

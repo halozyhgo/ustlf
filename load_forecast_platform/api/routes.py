@@ -51,7 +51,7 @@ def register_station():
         load_df['load_data'] = pd.to_numeric(load_df['load_data'],errors='coerce')
         # 根据额定发电功率与储能计划功率确定负荷下下限
         # 根据变压器额定容量确定负荷上限
-        processed_load = processor.process_load_data(load_df,)
+        processed_load = processor.process_load_data(load_df,station_data.rated_transform_power,station_data.rated_power,station_data.rated_power_pv)
         processed_load['site_id']= station_data.site_id
         processed_load['upload_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         processed_load['load_time'] = processed_load.index
@@ -128,36 +128,79 @@ def register_station():
 async def upload_real_time_data():
     logger.info("开始实时数据上传...")
     try:
+
+        # todo：连接数据库
+        config = Config()
+        db = DataBase(**config.database)
         # 验证请求数据
         data = request.get_json()
         upload_data = RealTimeDataUploadRequest(**data)
 
         config = Config()
         db = DataBase(**config.database)
-        query = f"SELECT trained FROM ustlf_station_info WHERE site_id = '{upload_data.site_id}'"
+        query = f"SELECT * FROM ustlf_station_info WHERE site_id = '{upload_data.site_id}'"
         station_info = db.query(query)
 
         if station_info.empty:
             logger.error(f"电站 {upload_data.site_id} 不存在")
-            return jsonify(CommonResponse(code="404", msg="电站不存在").model_dump())
+            return {
+                'code':'404',
+                'msg':f'电站{upload_data.site_id}不存在'
+            }
+                # jsonify(CommonResponse(code="404", msg="电站不存在").model_dump())
         trained = station_info['trained'].iloc[0]
 
 
         # 处理数据
-        new_data = pd.DataFrame(upload_data.real_his_load)
+        # new_data = pd.DataFrame(upload_data.real_his_load)
+        data = upload_data.real_his_load
+
+        # 提取 load_time 和 load_data
+        load_times = [item.load_time for item in data]
+        load_data = [item.load_data for item in data]
+
+        # 创建 DataFrame
+        new_data = pd.DataFrame({
+            'load_time': load_times,
+            'load_data': load_data
+        })
+
         new_data.set_index(pd.to_datetime(new_data['load_time']), inplace=True)
         new_data['load_data'] = pd.to_numeric(new_data['load_data'], errors='coerce')
         new_data['site_id'] = upload_data.site_id
         new_data['upload_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         new_data['load_time'] = new_data.index
 
-        # 获取历史负荷数据长度
+        # todo:判断数据中是否含有异常数据，
+        #  如果含有正常范围值之外的数据，报异常，并返回数据异常信号
+        #  1、查询表ustlf_station_info中的rated_power 与 rated_power_pv，作为负荷下界；查询rated_transform_power，作为负荷上限
+        #  2、判断数据是否在合理范围，不在合理范围则返回异常信号
+        rated_power = station_info['rated_power'].iloc[0]       # 储能额定容量
+        rated_power_pv = station_info['rated_power_pv'].iloc[0] # 光伏发电功率
+        rated_transform_power = station_info['rated_transform_power'].iloc[0]
+
+        if (new_data['load_data'] < (rated_power_pv-rated_power)).any() or (new_data['load_data'] > rated_transform_power).any():
+            logger.warning(f"电站 {upload_data.site_id} 的历史负荷数据异常")
+            return {
+                'code':'400',
+                'msg':f'电站{upload_data.site_id}的历史负荷数据异常'
+            }
+
+
+        # todo: start 若数据正常则将新数据存入到数据库中
+
+        db.insert('ustlf_station_history_load', new_data)
+        # todo: end 将新数据存入到数据库中完成
+
+        # todo: 获取历史负荷数据长度 判断历史负荷长度是否负荷要求
         load_query = f"""
                     SELECT load_time FROM ustlf_station_history_load
                     WHERE site_id = '{upload_data.site_id}'
                 """
         load_data = db.query(load_query)
-        if len(load_data):
+
+        # todo：如果长度不符合预测模型要求，则返回错误
+        if len(load_data)<96*90:
             logger.warning(f"电站 {upload_data.site_id} 的历史负荷数据为空")
             return jsonify(CommonResponse(code="402", msg="历史负荷长度不足").model_dump())
 
@@ -166,7 +209,7 @@ async def upload_real_time_data():
         if trained == 1:
             logger.info(f"电站 {upload_data.site_id} 已训练，开始预测...")
             # 调用模型进行预测
-            prediction_result = await predict_future_load(upload_data.site_id, new_data)
+            prediction_result = predict_future_load(upload_data.site_id, new_data)
             return jsonify(
                 CommonResponse(code="200", msg="数据已收到，预测结果返回", data=prediction_result).model_dump())
         else:
@@ -182,20 +225,17 @@ async def upload_real_time_data():
                 db.execute(update_query)
                 logger.info(f"电站 {upload_data.site_id} 模型训练完成，标记为已训练")
                 # 进行预测
-                prediction_result = await predict_future_load(upload_data.site_id, new_data)
+                prediction_result = predict_future_load(upload_data.site_id, new_data)
                 return jsonify(
                     CommonResponse(code="200", msg="数据已收到，预测结果返回", data=prediction_result).model_dump())
     except Exception as e:
         logger.error(f"实时数据上传失败: {str(e)}")
         return jsonify(CommonResponse(code="500", msg=f"实时数据上传失败: {str(e)}").model_dump())
 
-async def predict_future_load(site_id, new_data):
+def predict_future_load(site_id, new_data):
     logger.info(f"开始对电站 {site_id} 进行负荷预测...")
-
-
     config = Config()
     model_param = config.config['model_params']['lightgbm']
-    # train_param = config['lightgbm_training']
     db = DataBase(**config.database)
 
     # 1、从表中获取模型超参数和输入特征
@@ -215,86 +255,99 @@ async def predict_future_load(site_id, new_data):
     if hyperparams_info_table:
         hyperparams = hyperparams_info_table
 
-        load_end_time = datetime.now()
+    # todo： 实际部署后使用该方式
+    # load_end_time = datetime.now()
+    load_end_time = new_data.index[-1]
 
-        # 先以2024年9月2日做测试
-        load_end_time = datetime.now().replace(year=2024,month=9,day=2,hour=7,minute=45)
-        # load_end_time = new_data.index[-1]
-        load_start_time = load_end_time-timedelta(days=9)
+    # todo：先以2024年9月2日做测试
+    # load_end_time = datetime.now().replace(year=2024,month=9,day=2,hour=7,minute=45)
+    # load_end_time = new_data.index[-1]
+    load_start_time = load_end_time-timedelta(days=9)
 
-        load_start_time = load_start_time.strftime('%Y-%m-%d %H:%M:%S')
-        load_end_time = load_end_time.strftime('%Y-%m-%d %H:%M:%S')
+    load_start_time = load_start_time.strftime('%Y-%m-%d %H:%M:%S')
+    load_end_time = load_end_time.strftime('%Y-%m-%d %H:%M:%S')
 
-        # 2、从表中获取训练负荷数据
-        # todo:获取历史负荷过去9天的负荷数据
-        load_query = """
-                            SELECT load_time, load_data
-                            FROM ustlf_station_history_load
-                            WHERE site_id = '{}' AND load_time >='{}' AND load_time<='{}'
-                            ORDER BY load_time
-                        """.format(site_id,load_start_time, load_end_time)
-        load_df = db.query(load_query)
+    # 2、从表中获取训练负荷数据
+    # todo:获取历史负荷过去9天的负荷数据
+    load_query = """
+                        SELECT load_time, load_data
+                        FROM ustlf_station_history_load
+                        WHERE site_id = '{}' AND load_time >='{}' AND load_time<='{}'
+                        ORDER BY load_time
+                    """.format(site_id,load_start_time, load_end_time)
+    load_df = db.query(load_query)
 
 
-        # load_df.set_index(pd.to_datetime(load_df['load_time']), inplace=True)
+    # load_df.set_index(pd.to_datetime(load_df['load_time']), inplace=True)
 
-        # 3、从预测气象表中获取以后4H预测气象
-        # todo: 获取传输数据最新时间以后的4H数据，如果传输为为8点的数据，则返回8点15 ~ 12点15的预测气象数据
-        meteo_start_time = new_data.index[-1]
-        meteo_start_time = meteo_start_time+timedelta(minutes=15)
-        meteo_end_time = meteo_start_time + timedelta(hours=4)
-        meteo_start_time = meteo_start_time.strftime('%Y-%m-%d %H:%M:%S')
-        meteo_end_time = meteo_end_time.strftime('%Y-%m-%d %H:%M:%S')
-        #
-        # todo:获取预测气象，当有meteo_times相同的情况下只使用upload_time最新的那一条,通过去重保留第一条完成
-        meteo_query = """
-                    SELECT *
-                    FROM ustlf_station_forecast_meteo_data
-                    WHERE site_id = '{}' AND meteo_times >= '{}' AND meteo_times < '{}'
-                    ORDER BY meteo_times, update_time DESC
-                    """.format(site_id, meteo_start_time, meteo_end_time)
+    # 3、从预测气象表中获取以后4H预测气象
+    # todo: 获取传输数据最新时间以后的4H数据，如果传输为为8点的数据，则返回8点15 ~ 12点15的预测气象数据
+    meteo_start_time = new_data.index[-1]
+    meteo_start_time = meteo_start_time+timedelta(minutes=15)
+    meteo_end_time = meteo_start_time + timedelta(hours=4)
+    meteo_start_time = meteo_start_time.strftime('%Y-%m-%d %H:%M:%S')
+    meteo_end_time = meteo_end_time.strftime('%Y-%m-%d %H:%M:%S')
+    #
+    # todo:获取预测气象，当有meteo_times相同的情况下只使用upload_time最新的那一条,通过去重保留第一条完成
+    meteo_query = """
+                SELECT *
+                FROM ustlf_station_forecast_meteo_data
+                WHERE site_id = '{}' AND meteo_times >= '{}' AND meteo_times < '{}'
+                ORDER BY meteo_times, update_time DESC
+                """.format(site_id, meteo_start_time, meteo_end_time)
+    meteo_df = db.query(meteo_query)
+    if len(meteo_df)<16:
+        logger.warning(f"电站{site_id}预测气象数据不足,现在重新拉取气象预测数据")
+        # 进行调用拉取预测气象的接口
+        get_forcast_meteo_method({"site_id":site_id,'start_time':meteo_start_time[:10],'end_time':meteo_end_time[:10]})
         meteo_df = db.query(meteo_query)
-        meteo_df.set_index(pd.to_datetime(meteo_df['meteo_times']), inplace=True)
-        meteo_df = meteo_df[~meteo_df.index.duplicated(keep='first')]
+    if meteo_df<16:
+        logger.warning(f"电站{site_id}预测气象数据不足，拉取后仍然不足")
+        # return jsonify(CommonResponse(code="402", msg="预测气象数据不足").model_dump())
 
-        # todo: 将气象数据与负荷数据结合，然后根据现在的特征组合，分类出输入特征和标签
-        H_list = [i * 0.25 for i in range(1, 17)]
-        # todo: 获取预测时间的时间戳
-        pred_time = new_data.index[-1]
-        forcast_time_start = pred_time + timedelta(minutes=15)
-        mydict = {}
-        for i,H in enumerate(H_list):
-            # 自增15min
-            pred_time = pred_time + timedelta(minutes=15)
-            # todo : 1、获取对应模型
-            model_path = "./models_pkl/site_id_{}".format(site_id)
-            lgb_model = ML_Model(model_name='site_id_{}_model_{}'.format(site_id, i),
-                                 model_params=hyperparams, model_path=model_path)
-            lgb_model.load_model()
+    meteo_df.set_index(pd.to_datetime(meteo_df['meteo_times']), inplace=True)
+    meteo_df = meteo_df[~meteo_df.index.duplicated(keep='first')]
 
-            # todo : 2、获取模型输入数据
-            feature_engine = FeatureEngineer()
-            df_i, feature_columns = feature_engine.extract_pred_features(load_df, meteo_df, H)
+    # todo: 将气象数据与负荷数据结合，然后根据现在的特征组合，分类出输入特征和标签
+    H_list = [i * 0.25 for i in range(1, 17)]
+    # todo: 获取预测时间的时间戳
+    pred_time = new_data.index[-1]
+    forcast_time_start = pred_time + timedelta(minutes=15)
+    mydict = {}
+    for i,H in enumerate(H_list):
+        # 自增15min
+        pred_time = pred_time + timedelta(minutes=15)
+        # todo : 1、获取对应模型
+        model_path = "./models_pkl/site_id_{}".format(site_id)
+        lgb_model = ML_Model(model_name='site_id_{}_model_{}'.format(site_id, i),
+                             model_params=hyperparams, model_path=model_path)
+        lgb_model.load_model()
 
-            input_features = feature_columns
-            if feature_info_table:
-                input_features = feature_info_table
-            input_feature = list(set(input_features))
-            input_feature.sort()
-            input_data = df_i.loc[pred_time.strftime('%Y-%m-%d %H:%M:%S')][input_feature]
-            pred_i = lgb_model.model_predict([input_data])
-            mydict[pred_time.strftime('%Y-%m-%d %H:%M:%S')] = round(float(pred_i),2)
+        # todo : 2、获取模型输入数据
+        feature_engine = FeatureEngineer()
+        df_i, feature_columns = feature_engine.extract_pred_features(load_df, meteo_df, H)
 
-        # 4、将预测结果存入数据库中
-        res = {'site_id': site_id, 'meteo_id': 1, 'cal_time': datetime.now(),
-               'forcast_time_start': forcast_time_start, 'res_data': [json.dumps(mydict)]}
-        pred_df = pd.DataFrame(res)
-        db.insert(table='ustlf_pred_res', df=pred_df)
-        return jsonify(CommonResponse(
-            code="200",
-            msg="实时数据上传成功,预测结果返回",
-            data=mydict
-        ).model_dump())
+        input_features = feature_columns
+        if feature_info_table:
+            input_features = feature_info_table
+        input_feature = list(set(input_features))
+        input_feature.sort()
+        input_data = df_i.loc[pred_time.strftime('%Y-%m-%d %H:%M:%S')][input_feature]
+        pred_i = lgb_model.model_predict([input_data])
+        mydict[pred_time.strftime('%Y-%m-%d %H:%M:%S')] = round(float(pred_i),2)
+
+    # 4、将预测结果存入数据库中
+    res = {'site_id': site_id, 'meteo_id': 1, 'cal_time': datetime.now(),
+           'forcast_time_start': forcast_time_start, 'res_data': [json.dumps(mydict)]}
+    pred_df = pd.DataFrame(res)
+    db.insert(table='ustlf_pred_res', df=pred_df)
+    return mydict
+
+        # return jsonify(CommonResponse(
+        #     code="200",
+        #     msg="实时数据上传成功,预测结果返回",
+        #     data=mydict
+        # ).model_dump())
 
 # @api_bp.route('/station/hello_world', methods=['GET'])
 # def get_forecast_result():
@@ -632,7 +685,8 @@ def get_history_meteo_method(request_data):
         end_time = str(end_time)
 
         # 调用气象API
-        url = "http://8.212.49.208:5009/weather"
+        # url = "http://8.212.49.208:5009/weather"
+        url = "http://192.168.238.149:5009/weather"
         headers = {'apikey': 'renewable_api_key'}
         params = {
             'latitude': latitude,
@@ -647,7 +701,8 @@ def get_history_meteo_method(request_data):
 
         response = requests.get(url=url, params=params, headers=headers)
         res = response.json()
-        data = res['par']
+        data = res['data']
+        data = data['par']
 
         # 处理API返回数据
         temperature = data['temperature_2m']
@@ -715,8 +770,8 @@ def train_model_method(request_data):
     db = DataBase(**config.database)
     # 1、从表中获取模型超参数和输入特征
     info_query = """SELECT feature_info, hyperparams_info
-                            FROM ustlf_model_feature_hp_info
-                            WHERE site_id = '{}'
+                    FROM ustlf_model_feature_hp_info
+                    WHERE site_id = '{}'
                             """.format(train_req.site_id)
     res = db.query(info_query)
     if len(res) == 0:
@@ -736,11 +791,11 @@ def train_model_method(request_data):
     # 2、从表中获取训练数据（）
     # todo:获取历史负荷
     load_query = """
-                                SELECT load_time, load_data
-                                FROM ustlf_station_history_load
-                                WHERE site_id = '{}' AND load_time<'{}'
-                                ORDER BY load_time
-                            """.format(train_req.site_id, end_date)
+                    SELECT load_time, load_data
+                    FROM ustlf_station_history_load
+                    WHERE site_id = '{}' AND load_time<'{}'
+                    ORDER BY load_time
+                """.format(train_req.site_id, end_date)
     load_df = db.query(load_query)
     if len(load_df)<90*96:
         logger.warning(f"电站{train_req.site_id}历史负荷数据不足3个月")
@@ -787,11 +842,26 @@ def train_model_method(request_data):
         lgb_model.model_train(X_train, Y_train)
         lgb_model.save_model()
     logger.info(f"电站{train_req.site_id}模型训练成功")
-    return jsonify(CommonResponse(
-        code="200",
-        msg="模型训练成功",
-        data={"model_path保存到文件中": model_path}
-    ).model_dump())
+    # 修改station_info表中的trained数据为1
+    update_sql = """
+                    UPDATE ustlf_station_info
+                    SET trained = 1
+                    WHERE site_id = '{}'
+                """.format(train_req.site_id)
+
+    db.execute(update_sql)
+
+    return {
+        'code': "200",
+        'msg': "模型训练成功",
+        'data': f"电站{train_req.site_id}模型训练成功,模型文件保存在{model_path}"
+    }
+
+    # return jsonify(CommonResponse(
+    #     code="200",
+    #     msg="模型训练成功",
+    #     data={"model_path保存到文件中": model_path}
+    # ).model_dump())
 
 
 # 7. 模型训练接口
@@ -822,6 +892,10 @@ def get_forcast_meteo_method(request_data):
     # logger.info(f"数据库配置: {config.database}")
     db = DataBase(**config.database)
 
+    # 气象开始时间于结束时间
+    start_time = meteo_req.start_time
+    end_time = meteo_req.end_time
+
     sql_query = """
                 SELECT latitude, longitude
                 FROM ustlf_station_info
@@ -834,24 +908,39 @@ def get_forcast_meteo_method(request_data):
 
     # 处理时间参数
     current_time = datetime.now()
+    current_time1 = current_time.strftime('%Y-%m-%d')
 
     # 调用气象API
-    url = "http://8.212.49.208:5009/weather"
+    # url = "http://8.212.49.208:5009/weather"
+    url = "http://192.168.238.149:5009/weather"
     headers = {'apikey': 'renewable_api_key'}
+
     params = {
         'latitude': latitude,
         'longitude': longitude,
         'timezone': 'Asia/Shanghai',
         'forecast_days': 4,
         'interval': '15T',
-        'start_date': '2024-09-01',
-        'end_date': '2024-09-06',
+        'start_date': current_time1,     # 此处的日期需要根据实际情况进行修改
         'par': 'shortwave_radiation,temperature_2m,relative_humidity_2m,surface_pressure,precipitation,wind_speed_10m'
     }
+    if start_time and end_time:
+        params = {
+            'latitude': latitude,
+            'longitude': longitude,
+            'timezone': 'Asia/Shanghai',
+            'forecast_days': 4,
+            'interval': '15T',
+            'start_date': start_time,
+            'end_date': end_time,
+            'par': 'shortwave_radiation,temperature_2m,relative_humidity_2m,surface_pressure,precipitation,wind_speed_10m'
+        }
+
 
     response = requests.get(url=url, params=params, headers=headers)
     res = response.json()
-    data = res['par']
+    data = res['data']
+    data = data['par']
 
     # 处理API返回数据
     temperature = data['temperature_2m']
@@ -881,6 +970,7 @@ def get_forcast_meteo_method(request_data):
     # 存储到数据库
 
     db.insert(table='ustlf_station_forecast_meteo_data', df=df)
+    logger.info(f"电站{meteo_req.site_id}预测气象拉取成功")
     return jsonify(CommonResponse(
         code="200",
         msg=f"预测气象拉取成功"

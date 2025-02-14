@@ -12,7 +12,7 @@ class DataProcessor:
             threshold_constant=threshold_constant
         )
     
-    def process_load_data(self, df):
+    def process_load_data(self, df,rated_transform_power,rated_power,rated_power_pv):
         """处理负荷数据"""
         try:
             # 1. 时间格式化
@@ -27,7 +27,7 @@ class DataProcessor:
             df = df[~df.index.duplicated(keep='first')]
             
             # 4. 数据清洗
-            df = self.cleaner.clean_load_data(df, load_col='load_data')
+            df = self.cleaner.clean_load_data(df,rated_transform_power,rated_power,rated_power_pv, load_col='load_data')
             
             logger.info("负荷数据处理完成")
             return df

@@ -5,9 +5,10 @@ from load_forecast_platform.utils.config import Config
 from load_forecast_platform.utils.scheduler import Scheduler
 from load_forecast_platform.utils.database import DataBase
 from load_forecast_platform.api.schemas import StationRegisterRequest
-from .routes import get_history_meteo_method,train_model_method
+from .routes import get_history_meteo_method, train_model_method
 
 from loguru import logger
+
 logger.add(
     "logs/app.log",
     rotation="1 day",
@@ -19,6 +20,7 @@ logger.add(
     backtrace=True,
     diagnose=True,
 )
+
 
 def initialize_stations():
     """初始化电站信息"""
@@ -55,16 +57,19 @@ def initialize_stations():
         logger.info(f"开始对电站 {site_id} 进行模型训练...")
         # 这里调用模型训练的函数
         # result = get_history_meteo_method(site_id)
-        train_model_method({'site_id': site_id})
+
+        # todo：测试阶段可以先不开启，该训练是初始化训练使用的
+        # train_model_method({'site_id': site_id})
 
     logger.info("电站初始化完成。")
 
+
 def create_app():
     app = Flask(__name__)
-    
+
     # 初始化自定义调度器
     scheduler = Scheduler()
-    
+
     # 添加气象数据获取任务
     scheduler.add_meteo_fetch_job()
 
@@ -83,18 +88,20 @@ def create_app():
     initialize_stations()  # 调用初始化函数
 
     scheduler.start()
-    
+
     # 注册蓝本
     from .routes import api_bp
     app.register_blueprint(api_bp, url_prefix='/ustlf')
-    
+
     return app
+
 
 app = create_app()
 
 if __name__ == '__main__':
     from gevent import pywsgi
-    app.debug=True
+
+    app.debug = True
     # server = pywsgi.WSGIServer(('192.168.156.222', 5000), app)
     server = pywsgi.WSGIServer(('0.0.0.0', 5000), app)
     server.serve_forever()
