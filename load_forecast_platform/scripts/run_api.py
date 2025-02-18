@@ -23,5 +23,5 @@ if __name__ == "__main__":
     init_scheduler(app)
     from gevent import pywsgi
     app.debug = True
-    server = pywsgi.WSGIServer(('0.0.0.0', 5000), app)
-    server.serve_forever()
+    # server = pywsgi.WSGIServer(('0.0.0.0', 5000), app)
+    # server.serve_forever()

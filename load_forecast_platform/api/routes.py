@@ -301,12 +301,19 @@ def predict_future_load(site_id, new_data):
         # 进行调用拉取预测气象的接口
         get_forcast_meteo_method({"site_id":site_id,'start_time':meteo_start_time[:10],'end_time':meteo_end_time[:10]})
         meteo_df = db.query(meteo_query)
-    if meteo_df<16:
+    if len(meteo_df)<16:
         logger.warning(f"电站{site_id}预测气象数据不足，拉取后仍然不足")
         # return jsonify(CommonResponse(code="402", msg="预测气象数据不足").model_dump())
 
     meteo_df.set_index(pd.to_datetime(meteo_df['meteo_times']), inplace=True)
     meteo_df = meteo_df[~meteo_df.index.duplicated(keep='first')]
+    if len(meteo_df)<16:
+        logger.warning(f"电站{site_id}预测气象数据不足,现在重新拉取气象预测数据")
+        # 进行调用拉取预测气象的接口
+        get_forcast_meteo_method({"site_id":site_id,'start_time':meteo_start_time[:10],'end_time':meteo_end_time[:10]})
+        meteo_df = db.query(meteo_query)
+        meteo_df.set_index(pd.to_datetime(meteo_df['meteo_times']), inplace=True)
+        meteo_df = meteo_df[~meteo_df.index.duplicated(keep='first')]
 
     # todo: 将气象数据与负荷数据结合，然后根据现在的特征组合，分类出输入特征和标签
     H_list = [i * 0.25 for i in range(1, 17)]
@@ -924,7 +931,7 @@ def get_forcast_meteo_method(request_data):
         'start_date': current_time1,     # 此处的日期需要根据实际情况进行修改
         'par': 'shortwave_radiation,temperature_2m,relative_humidity_2m,surface_pressure,precipitation,wind_speed_10m'
     }
-    if start_time and end_time:
+    if start_time:
         params = {
             'latitude': latitude,
             'longitude': longitude,

@@ -20,7 +20,7 @@ class Scheduler:
             with app.app_context():
                 try:
                     # 获取所有电站列表
-                    response = requests.get('http://localhost:5000/ustlf/station/list')
+                    response = requests.get('http://localhost:5555/ustlf/station/list')
                     if response.status_code != 200:
                         logger.error(f"获取电站列表失败: {response.status_code}")
                         return
