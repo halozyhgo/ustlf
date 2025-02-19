@@ -873,7 +873,7 @@ def train_model_method(request_data):
 
 # 7. 模型训练接口
 @api_bp.route('/station/model_train', methods=['POST'])
-def train_model():
+async def train_model():
     """模型训练接口"""
     logger.info("开始模型训练...")
     try:

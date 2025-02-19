@@ -4,19 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="测试实时数据上传">
-      <change afterPath="$PROJECT_DIR$/.idea/sshConfigs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/load_forecast_platform/api/run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/USLF_pro.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/USLF_pro.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="b0f67d9c-e30a-4b7b-999f-c8b5f2c5a844" name="Changes" comment="测试day-1">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/api/run_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/api/run_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/gunicorn_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/gunicorn_config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/scripts/run_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/scripts/run_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_forecast_platform/utils/scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_forecast_platform/utils/scheduler.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,14 +75,14 @@
     "Python.init_db.executor": "Run",
     "Python.model_trainer.executor": "Debug",
     "Python.routes.executor": "Debug",
-    "Python.run.executor": "Run",
+    "Python.run.executor": "Debug",
     "Python.self_test.executor": "Run",
     "Python.time_test.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "D:/CodeData/USLF_pro",
+    "last_opened_file_path": "D:/CodeData/大地量子气象-各个电站负荷预测准确率验证all_in_one/VPP_ustlf_test_data",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -290,7 +280,7 @@
       <workItem from="1739322111787" duration="43408000" />
       <workItem from="1739500277985" duration="26466000" />
       <workItem from="1739753625583" duration="23304000" />
-      <workItem from="1739840474204" duration="2037000" />
+      <workItem from="1739840474204" duration="25219000" />
     </task>
     <task id="LOCAL-00001" summary="初次配置后的项目v1">
       <option name="closed" value="true" />
@@ -492,7 +482,15 @@
       <option name="project" value="LOCAL" />
       <updated>1739528039833</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="测试day-1">
+      <option name="closed" value="true" />
+      <created>1739844961947</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1739844961947</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -540,7 +538,8 @@
     <MESSAGE value="增加log日志前版本" />
     <MESSAGE value="初始化完成" />
     <MESSAGE value="测试实时数据上传" />
-    <option name="LAST_COMMIT_MESSAGE" value="测试实时数据上传" />
+    <MESSAGE value="测试day-1" />
+    <option name="LAST_COMMIT_MESSAGE" value="测试day-1" />
     <option name="GROUP_MULTIFILE_MERGE_BY_DIRECTORY" value="true" />
   </component>
   <component name="XDebuggerManager">
@@ -678,11 +677,6 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>323</line>
-          <option name="timeStamp" value="346" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
           <line>318</line>
           <option name="timeStamp" value="351" />
         </line-breakpoint>
@@ -748,28 +742,23 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>202</line>
-          <option name="timeStamp" value="386" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>208</line>
-          <option name="timeStamp" value="387" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
           <line>214</line>
           <option name="timeStamp" value="388" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>303</line>
-          <option name="timeStamp" value="391" />
+          <line>711</line>
+          <option name="timeStamp" value="392" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
-          <line>711</line>
-          <option name="timeStamp" value="392" />
+          <line>211</line>
+          <option name="timeStamp" value="393" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/load_forecast_platform/api/routes.py</url>
+          <line>284</line>
+          <option name="timeStamp" value="395" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -783,7 +772,7 @@
     <SUITE FILE_PATH="coverage/USLF_pro$.coverage" NAME=" Coverage Results" MODIFIED="1736470052313" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/tests" />
     <SUITE FILE_PATH="coverage/USLF_pro$Flask__load_forecast_platform_api_run_py_.coverage" NAME="Flask (load_forecast_platform/api/run.py) Coverage Results" MODIFIED="1739841504071" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/USLF_pro$routes.coverage" NAME="routes Coverage Results" MODIFIED="1736330569481" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/api" />
-    <SUITE FILE_PATH="coverage/USLF_pro$run.coverage" NAME="run Coverage Results" MODIFIED="1739782203475" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/api" />
+    <SUITE FILE_PATH="coverage/USLF_pro$run.coverage" NAME="run Coverage Results" MODIFIED="1739929403702" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/api" />
     <SUITE FILE_PATH="coverage/USLF_pro$config.coverage" NAME="config Coverage Results" MODIFIED="1736316705308" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/utils" />
     <SUITE FILE_PATH="coverage/USLF_pro$self_test.coverage" NAME="self_test Coverage Results" MODIFIED="1737075634244" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/tests" />
     <SUITE FILE_PATH="coverage/USLF_pro$model_trainer.coverage" NAME="model_trainer Coverage Results" MODIFIED="1736996873139" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/load_forecast_platform/trainer" />
