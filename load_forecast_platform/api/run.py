@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from flask import Flask
-
-from load_forecast_platform.utils.config import Config
-from load_forecast_platform.utils.scheduler import Scheduler
-from load_forecast_platform.utils.database import DataBase
-from load_forecast_platform.api.schemas import StationRegisterRequest
-from load_forecast_platform.api.routes import get_history_meteo_method, train_model_method
+import sys
+sys.path.append("..")
+from utils.config import Config
+from utils.scheduler import Scheduler
+from utils.database import DataBase
+from api.schemas import StationRegisterRequest
+from api.routes import get_history_meteo_method, train_model_method
 
 from loguru import logger
 
@@ -92,30 +93,30 @@ def create_app():
     app = Flask(__name__)
 
     # 初始化自定义调度器
-    scheduler = Scheduler()
+    # scheduler = Scheduler()
 
     # 添加气象数据获取任务
-    scheduler.add_meteo_fetch_job()
+    # scheduler.add_meteo_fetch_job()
 
     # 每天在如下几个时间点更新预测气象数据
-    scheduler.add_future_meteo_job(hour=2)
-    scheduler.add_future_meteo_job(hour=8)
-    scheduler.add_future_meteo_job(hour=14)
-    scheduler.add_future_meteo_job(hour=20)
+    # scheduler.add_future_meteo_job(hour=2)
+    # scheduler.add_future_meteo_job(hour=8)
+    # scheduler.add_future_meteo_job(hour=14)
+    # scheduler.add_future_meteo_job(hour=20)
 
     # 每日23点对注册电站模型训练
-    scheduler.add_model_training_job(hour=23, minute=15)
+    # scheduler.add_model_training_job(hour=23, minute=15)
 
     # 超参数寻优在每日1号的10点进行
-    scheduler.add_feature_search_job(day=1, hour=10)
+    # scheduler.add_feature_search_job(day=1, hour=10)
 
-    initialize_stations()  # 调用初始化函数
+    # initialize_stations()  # 调用初始化函数
 
-    scheduler.start()
+    # scheduler.start()
 
     # 注册蓝本
     # from .routes import api_bp
-    from load_forecast_platform.api.routes import api_bp
+    from api.routes import api_bp
     app.register_blueprint(api_bp, url_prefix='/ustlf')
 
     return app
@@ -127,5 +128,7 @@ if __name__ == '__main__':
     from gevent import pywsgi
 
     app.debug = True
-    server = pywsgi.WSGIServer(('0.0.0.0', 5555), app)
-    server.serve_forever()
+    # server = pywsgi.WSGIServer(('0.0.0.0', 5555), app)
+    # server.serve_forever()
+
+    app.run(host='0.0.0.0', port=5555, threaded=False)

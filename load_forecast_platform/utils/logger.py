@@ -2,8 +2,8 @@
 import logging
 import os
 from datetime import datetime
-from load_forecast_platform.utils.database import DataBase
-from load_forecast_platform.utils.config import Config
+from utils.database import DataBase
+from utils.config import Config
 from loguru import logger
 import pandas as pd
 

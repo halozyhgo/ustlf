@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask_apscheduler import APScheduler
-from load_forecast_platform.api.routes import get_history_meteo, hyperparameter_feature_search
-from load_forecast_platform.api import app
+from api.routes import get_history_meteo, hyperparameter_feature_search
+from api import app
 
 def init_scheduler(app):
     scheduler = APScheduler()

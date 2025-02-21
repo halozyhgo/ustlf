@@ -104,7 +104,7 @@ class FeatureEngineer:
                 add_fea_res
             )
             # df[['']]
-            logger.info(f"特征工程完成，共生成 {len(feature_columns)} 个特征")
+            # logger.info(f"特征工程完成，共生成 {len(feature_columns)} 个特征")
             return df, feature_columns
             
         except Exception as e:

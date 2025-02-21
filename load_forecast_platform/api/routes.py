@@ -2,6 +2,9 @@
 import json
 import os
 import itertools
+import time
+import sys
+sys.path.append("..")
 
 import tqdm
 from sklearn.model_selection import train_test_split, ParameterGrid
@@ -9,15 +12,17 @@ from sklearn.metrics import mean_squared_error
 
 from flask import Blueprint, request, jsonify
 
-from load_forecast_platform.models.lightgbm_model import ML_Model
+from models.lightgbm_model import ML_Model
+
+from multiprocessing import Pool
 
 # 创建蓝本
 api_bp = Blueprint('api', __name__)
-from load_forecast_platform.data_processor.feature_engineer import FeatureEngineer
-from load_forecast_platform.utils.database import DataBase
-from load_forecast_platform.utils.config import Config
-from load_forecast_platform.data_processor.data_processor import DataProcessor
-from load_forecast_platform.api.schemas import (
+from data_processor.feature_engineer import FeatureEngineer
+from utils.database import DataBase
+from utils.config import Config
+from data_processor.data_processor import DataProcessor
+from api.schemas import (
     StationRegisterRequest, RealTimeDataUploadRequest, ForecastRequest,
     FeatureSearchRequest, HyperParamSearchRequest, HistoryMeteoRequest,
     ModelTrainRequest, CommonResponse, ForecastMeteoRequest
@@ -122,10 +127,107 @@ def register_station():
             msg=f"上传成功"
         ).model_dump())
 
+def real_time_pred(data):
+    upload_data = RealTimeDataUploadRequest(**data)
+    # time.sleep(3)
+    config = Config()
+    db = DataBase(**config.database)
+    query = f"SELECT * FROM ustlf_station_info WHERE site_id = '{upload_data.site_id}'"
+    station_info = db.query(query)
+
+    if station_info.empty:
+        logger.error(f"电站 {upload_data.site_id} 不存在")
+        return {
+            'code': '404',
+            'msg': f'电站{upload_data.site_id}不存在'
+        }
+        # jsonify(CommonResponse(code="404", msg="电站不存在").model_dump())
+    trained = station_info['trained'].iloc[0]
+
+    # 处理数据
+    # new_data = pd.DataFrame(upload_data.real_his_load)
+    data = upload_data.real_his_load
+
+    # 提取 load_time 和 load_data
+    load_times = [item.load_time for item in data]
+    load_data = [item.load_data for item in data]
+
+    # 创建 DataFrame
+    new_data = pd.DataFrame({
+        'load_time': load_times,
+        'load_data': load_data
+    })
+
+    new_data.set_index(pd.to_datetime(new_data['load_time']), inplace=True)
+    new_data['load_data'] = pd.to_numeric(new_data['load_data'], errors='coerce')
+    new_data['site_id'] = upload_data.site_id
+    new_data['upload_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    new_data['load_time'] = new_data.index
+
+    # todo:判断数据中是否含有异常数据，
+    #  如果含有正常范围值之外的数据，报异常，并返回数据异常信号
+    #  1、查询表ustlf_station_info中的rated_power 与 rated_power_pv，作为负荷下界；查询rated_transform_power，作为负荷上限
+    #  2、判断数据是否在合理范围，不在合理范围则返回异常信号
+    rated_power = station_info['rated_power'].iloc[0]  # 储能额定容量
+    rated_power_pv = station_info['rated_power_pv'].iloc[0]  # 光伏发电功率
+    rated_transform_power = station_info['rated_transform_power'].iloc[0]
+
+    if (new_data['load_data'] < (rated_power_pv - rated_power)).any() or (
+            new_data['load_data'] > rated_transform_power).any():
+        logger.warning(f"电站 {upload_data.site_id} 的历史负荷数据异常")
+        return {
+            'code': '400',
+            'msg': f'电站{upload_data.site_id}的历史负荷数据异常'
+        }
+
+    # todo: start 若数据正常则将新数据存入到数据库中
+
+    db.insert('ustlf_station_history_load', new_data)
+    # todo: end 将新数据存入到数据库中完成
+
+    # todo: 获取历史负荷数据长度 判断历史负荷长度是否负荷要求
+    load_query = f"""
+                        SELECT load_time FROM ustlf_station_history_load
+                        WHERE site_id = '{upload_data.site_id}'
+                    """
+    load_data = db.query(load_query)
+
+    # todo：如果长度不符合预测模型要求，则返回错误
+    if len(load_data) < 96 * 90:
+        logger.warning(f"电站 {upload_data.site_id} 的历史负荷数据为空")
+        return jsonify(CommonResponse(code="402", msg="历史负荷长度不足").model_dump())
+
+    time_span = load_data['load_time'].max() - load_data['load_time'].min()
+
+    if trained == 1:
+        logger.info(f"电站 {upload_data.site_id} 已训练，开始预测...")
+        # 调用模型进行预测
+        with Pool(processes=10) as pool:
+            # prediction_result = pool.map(predict_future_load,([(upload_data.site_id, new_data)]))
+            prediction_result = predict_future_load(upload_data.site_id, new_data)
+            return jsonify(
+                CommonResponse(code="200", msg="数据已收到，预测结果返回", data=prediction_result).model_dump())
+    else:
+        if time_span.days < 90:
+            logger.warning(f"电站 {upload_data.site_id} 的历史负荷长度不足3个月")
+            return jsonify(CommonResponse(code="402", msg="历史负荷长度不足").model_dump())
+        else:
+            logger.info(f"电站 {upload_data.site_id} 历史负荷长度满足3个月，开始训练...")
+            # 进行模型训练
+            train_model_method({'site_id': upload_data.site_id})
+            # 训练完成后，更新 trained 标志位
+            update_query = f"UPDATE ustlf_station_info SET trained = 1 WHERE site_id = '{upload_data.site_id}'"
+            db.execute(update_query)
+            logger.info(f"电站 {upload_data.site_id} 模型训练完成，标记为已训练")
+            # 进行预测
+            prediction_result = predict_future_load(upload_data.site_id, new_data)
+            return jsonify(
+                CommonResponse(code="200", msg="数据已收到，预测结果返回", data=prediction_result).model_dump())
+
 
 # 2. 实时数据上传接口
 @api_bp.route('/station/real_time_data_upload', methods=['POST'])
-async def upload_real_time_data():
+def upload_real_time_data():
     logger.info("开始实时数据上传...")
     try:
 
@@ -134,105 +236,18 @@ async def upload_real_time_data():
         db = DataBase(**config.database)
         # 验证请求数据
         data = request.get_json()
-        upload_data = RealTimeDataUploadRequest(**data)
-
-        config = Config()
-        db = DataBase(**config.database)
-        query = f"SELECT * FROM ustlf_station_info WHERE site_id = '{upload_data.site_id}'"
-        station_info = db.query(query)
-
-        if station_info.empty:
-            logger.error(f"电站 {upload_data.site_id} 不存在")
-            return {
-                'code':'404',
-                'msg':f'电站{upload_data.site_id}不存在'
-            }
-                # jsonify(CommonResponse(code="404", msg="电站不存在").model_dump())
-        trained = station_info['trained'].iloc[0]
+        res = real_time_pred(data)
+        print(res)
+        return res
 
 
-        # 处理数据
-        # new_data = pd.DataFrame(upload_data.real_his_load)
-        data = upload_data.real_his_load
-
-        # 提取 load_time 和 load_data
-        load_times = [item.load_time for item in data]
-        load_data = [item.load_data for item in data]
-
-        # 创建 DataFrame
-        new_data = pd.DataFrame({
-            'load_time': load_times,
-            'load_data': load_data
-        })
-
-        new_data.set_index(pd.to_datetime(new_data['load_time']), inplace=True)
-        new_data['load_data'] = pd.to_numeric(new_data['load_data'], errors='coerce')
-        new_data['site_id'] = upload_data.site_id
-        new_data['upload_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        new_data['load_time'] = new_data.index
-
-        # todo:判断数据中是否含有异常数据，
-        #  如果含有正常范围值之外的数据，报异常，并返回数据异常信号
-        #  1、查询表ustlf_station_info中的rated_power 与 rated_power_pv，作为负荷下界；查询rated_transform_power，作为负荷上限
-        #  2、判断数据是否在合理范围，不在合理范围则返回异常信号
-        rated_power = station_info['rated_power'].iloc[0]       # 储能额定容量
-        rated_power_pv = station_info['rated_power_pv'].iloc[0] # 光伏发电功率
-        rated_transform_power = station_info['rated_transform_power'].iloc[0]
-
-        if (new_data['load_data'] < (rated_power_pv-rated_power)).any() or (new_data['load_data'] > rated_transform_power).any():
-            logger.warning(f"电站 {upload_data.site_id} 的历史负荷数据异常")
-            return {
-                'code':'400',
-                'msg':f'电站{upload_data.site_id}的历史负荷数据异常'
-            }
-
-
-        # todo: start 若数据正常则将新数据存入到数据库中
-
-        db.insert('ustlf_station_history_load', new_data)
-        # todo: end 将新数据存入到数据库中完成
-
-        # todo: 获取历史负荷数据长度 判断历史负荷长度是否负荷要求
-        load_query = f"""
-                    SELECT load_time FROM ustlf_station_history_load
-                    WHERE site_id = '{upload_data.site_id}'
-                """
-        load_data = db.query(load_query)
-
-        # todo：如果长度不符合预测模型要求，则返回错误
-        if len(load_data)<96*90:
-            logger.warning(f"电站 {upload_data.site_id} 的历史负荷数据为空")
-            return jsonify(CommonResponse(code="402", msg="历史负荷长度不足").model_dump())
-
-        time_span = load_data['load_time'].max() - load_data['load_time'].min()
-
-        if trained == 1:
-            logger.info(f"电站 {upload_data.site_id} 已训练，开始预测...")
-            # 调用模型进行预测
-            prediction_result = predict_future_load(upload_data.site_id, new_data)
-            return jsonify(
-                CommonResponse(code="200", msg="数据已收到，预测结果返回", data=prediction_result).model_dump())
-        else:
-            if time_span.days < 90:
-                logger.warning(f"电站 {upload_data.site_id} 的历史负荷长度不足3个月")
-                return jsonify(CommonResponse(code="402", msg="历史负荷长度不足").model_dump())
-            else:
-                logger.info(f"电站 {upload_data.site_id} 历史负荷长度满足3个月，开始训练...")
-                # 进行模型训练
-                await train_model_method({'site_id':upload_data.site_id})
-                # 训练完成后，更新 trained 标志位
-                update_query = f"UPDATE ustlf_station_info SET trained = 1 WHERE site_id = '{upload_data.site_id}'"
-                db.execute(update_query)
-                logger.info(f"电站 {upload_data.site_id} 模型训练完成，标记为已训练")
-                # 进行预测
-                prediction_result = predict_future_load(upload_data.site_id, new_data)
-                return jsonify(
-                    CommonResponse(code="200", msg="数据已收到，预测结果返回", data=prediction_result).model_dump())
     except Exception as e:
         logger.error(f"实时数据上传失败: {str(e)}")
         return jsonify(CommonResponse(code="500", msg=f"实时数据上传失败: {str(e)}").model_dump())
 
 def predict_future_load(site_id, new_data):
+    # site_id = req[0]
+    # new_data = req[1]
     logger.info(f"开始对电站 {site_id} 进行负荷预测...")
     config = Config()
     model_param = config.config['model_params']['lightgbm']
@@ -830,6 +845,7 @@ def train_model_method(request_data):
     for H in H_list:
         feature_engine = FeatureEngineer()
         df_i, feature_columns = feature_engine.extract_features(load_df, meteo_df, h=H)
+        logger.info(f"{train_req.site_id}特征工程完成第{H}小时的训练数据准备，共生成 {len(feature_columns)} 个特征")
         df_i_copy = df_i.copy()
         df_list.append(df_i_copy)
     input_feature = feature_columns
@@ -870,17 +886,35 @@ def train_model_method(request_data):
     #     data={"model_path保存到文件中": model_path}
     # ).model_dump())
 
+def test2(data):
+    print(data)
+    time.sleep(10)
+    return data
+
+@api_bp.route('/station/model_test', methods=['POST'])
+def test():
+    request_data = request.get_json()
+    data = request.get_json()
+    with Pool(processes=4) as pool:
+        res = pool.map(train_model_method, (data))
+        # res = train_model_method(data)
+        logger.info("模型训练成功")
+        return res
+
+
 
 # 7. 模型训练接口
 @api_bp.route('/station/model_train', methods=['POST'])
-async def train_model():
+def train_model():
     """模型训练接口"""
     logger.info("开始模型训练...")
     try:
         data = request.get_json()
-        res = train_model_method(data)
-        logger.info("模型训练成功")
-        return res
+        with Pool(processes=6) as pool:
+            res = pool.map(train_model_method, ([data]))
+            # res = train_model_method(data)
+            logger.info("模型训练成功")
+            return res
 
     except Exception as e:
         logger.error(f"模型训练失败: {str(e)}")

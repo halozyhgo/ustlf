@@ -7,8 +7,8 @@ from loguru import logger
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
-from load_forecast_platform.utils.config import Config
-from load_forecast_platform.utils.database import DataBase
+from utils.config import Config
+from utils.database import DataBase
 
 def create_tables(db):
     """创建必要的数据表"""

@@ -2,8 +2,8 @@
 import requests
 from datetime import datetime, timedelta
 from loguru import logger
-from load_forecast_platform.utils.config import Config
-from load_forecast_platform.utils.database import DataBase
+from utils.config import Config
+from utils.database import DataBase
 
 def get_site_ids():
     """获取所有电站ID"""

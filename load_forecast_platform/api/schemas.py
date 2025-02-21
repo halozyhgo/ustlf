@@ -41,10 +41,13 @@ class LoadDataItem(BaseModel):
     @classmethod
     def validate_load_time(cls, v):
         try:
-            # 检查是否符合指定格式
+            # 检查是否符合指定格式"%Y-%m-%d %H:%M:%S"或者"%Y-%m-%d %H:%M"都可以
             datetime.strptime(v, "%Y-%m-%d %H:%M:%S")
         except ValueError:
-            raise ValueError("load_time格式必须为YYYY-MM-DD HH:MM:SS")
+            try:
+                datetime.strptime(v, "%Y-%m-%d %H:%M")
+            except:
+                raise ValueError("load_time格式必须为YYYY-MM-DD HH:MM:SS 或 YYYY-MM-DD HH:MM")
         return v
 
 # 主请求模型

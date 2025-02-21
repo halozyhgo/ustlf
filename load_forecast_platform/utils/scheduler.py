@@ -3,7 +3,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from loguru import logger
 from datetime import datetime
-from load_forecast_platform.api.routes import get_history_meteo_method,get_forcast_meteo_method,train_model_method,hyperparameter_feature_search_method
+from api.routes import get_history_meteo_method,get_forcast_meteo_method,train_model_method,hyperparameter_feature_search_method
 import pytz
 
 class Scheduler:
@@ -14,7 +14,7 @@ class Scheduler:
     def add_feature_search_job(self, day=1, hour=10):
         """添加特征搜索任务"""
         def search_features_for_stations():
-            from load_forecast_platform.api import app
+            from api import app
             import requests
             
             with app.app_context():
@@ -61,7 +61,7 @@ class Scheduler:
     def add_model_training_job(self, hour=1, minute=15):
         """添加模型训练任务"""
         def train_models_for_stations():
-            from load_forecast_platform.api import app
+            from api import app
             import requests
             
             with app.app_context():
@@ -107,7 +107,7 @@ class Scheduler:
     def add_meteo_fetch_job(self, hour=19):
         """添加气象数据获取任务"""
         def fetch_meteo_for_stations():
-            from load_forecast_platform.api import app
+            from api import app
             import requests
             
             with app.app_context():
@@ -159,7 +159,7 @@ class Scheduler:
         """获取预测气象数据获取任务"""
 
         def get_forecast_meteo_for_stations():
-            from load_forecast_platform.api import app
+            from api import app
             import requests
 
             with app.app_context():

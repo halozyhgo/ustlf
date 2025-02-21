@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# from load_forecast_platform.api import app
-from load_forecast_platform.utils.scheduler import Scheduler
-from load_forecast_platform.api.routes import get_history_meteo, hyperparameter_feature_search
+# from api import app
+from utils.scheduler import Scheduler
+from api.routes import get_history_meteo, hyperparameter_feature_search
 from flask import Flask
 
 
